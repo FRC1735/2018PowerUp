@@ -77,8 +77,6 @@ public class Robot extends TimedRobot {
     	//Set an initial value for SquaredInputs (which is used for joystick routines to provide increased sensitivity at low speeds)
     	SmartDashboard.putBoolean("SquaredInputs", true);
     	
-    	// Set the default for the drivetrain type (real or practice bot; false is the real robot)
-    	SmartDashboard.putBoolean("UsePracticeDriveline", false);
     }
 
     /**
@@ -97,7 +95,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
-    	Robot.driveTrain.initDriveTrain(); // set default driveline and control type
        autonomousCommand = chooser.getSelected();
         // schedule the autonomous command (example)
         if (autonomousCommand != null) autonomousCommand.start();
@@ -113,7 +110,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
-    	Robot.driveTrain.initDriveTrain(); // set default driveline and control type
         // This makes sure that the autonomous stops running when
         // teleop starts running. If you want the autonomous to
         // continue until interrupted by another command, remove
