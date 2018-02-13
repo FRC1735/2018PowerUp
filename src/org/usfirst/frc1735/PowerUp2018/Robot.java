@@ -105,6 +105,15 @@ public class Robot extends TimedRobot {
     	ahrs.zeroYaw(); // Init the gyro to zero degrees
     	
     	driveTrain.drivetrainInit(); //Initialize the HW and SW PID controllers for the drivetrain
+    	
+    	SmartDashboard.putNumber("Cruise SpeedDir", 2700); // speed in units per 100ms (2745 is full speed)
+    	SmartDashboard.putNumber("Cruise Dist", 4096); // encoder ticks
+    	SmartDashboard.putNumber("Cruise Accel", 8100); //1/3 sec to get to full speed
+    	SmartDashboard.putNumber("P", 0.0);//0.995 on last year's robot
+    	SmartDashboard.putNumber("I", 0.0);//0.005 on last year's robot
+    	SmartDashboard.putNumber("D", 0.0);
+    	SmartDashboard.putNumber("F", 0.3789);
+    	
     }
 
     /**
