@@ -44,7 +44,7 @@ public class DriveWithPID extends Command {
         
     }
 
-    //Void constructor gets distance from SmartDashboard
+    //Void constructor gets distance from SmartDashboard.  Allows us to use a button (w/ no preset) to call the command
     public DriveWithPID() {
     	System.out.println("DriveWithPID Null constructor called");
     	m_getDistFromSmartDashboard = true;
@@ -55,9 +55,9 @@ public class DriveWithPID extends Command {
     @Override
     protected void initialize() {
     	//Set the driveline's Talons into MotionMagic mode
-    	Robot.driveTrain.motionMagicInit();
-    	//PID for this command
-    	double p = SmartDashboard.getNumber("P", 1);
+    	Robot.driveTrain.setPIDMode(); // This also turns off the motors as part of the mode switch.
+    	//extract the PID values for this command
+    	double p = SmartDashboard.getNumber("P", 0);
     	double i = SmartDashboard.getNumber("I", 0);
     	double d = SmartDashboard.getNumber("D", 0);
     	double f = SmartDashboard.getNumber("F", 0.3789);
@@ -65,73 +65,91 @@ public class DriveWithPID extends Command {
     	RobotMap.driveTrainLeftMotor.config_kI(0, i, 0); // Slot, value, timeout in ms
     	RobotMap.driveTrainLeftMotor.config_kD(0, d, 0); // Slot, value, timeout in ms
     	RobotMap.driveTrainLeftMotor.config_kF(0, f, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainRightMotor.config_kP(0, p, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainRightMotor.config_kI(0, i, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainRightMotor.config_kD(0, d, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainRightMotor.config_kF(0, f, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainLeftFollower.config_kP(0, p, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainLeftFollower.config_kI(0, i, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainLeftFollower.config_kD(0, d, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainLeftFollower.config_kF(0, f, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainRightFollower.config_kP(0, p, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainRightFollower.config_kI(0, i, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainRightFollower.config_kD(0, d, 0); // Slot, value, timeout in ms
-    	//RobotMap.driveTrainRightFollower.config_kF(0, f, 0); // Slot, value, timeout in ms
+    	RobotMap.driveTrainRightMotor.config_kP(0, p, 0); // Slot, value, timeout in ms
+    	RobotMap.driveTrainRightMotor.config_kI(0, i, 0); // Slot, value, timeout in ms
+    	RobotMap.driveTrainRightMotor.config_kD(0, d, 0); // Slot, value, timeout in ms
+    	RobotMap.driveTrainRightMotor.config_kF(0, f, 0); // Slot, value, timeout in ms
+    	
+    	// Initialize the desired max speed and acceleration:
+    	m_magDir = (int) SmartDashboard.getNumber("Cruise SpeedDir", 2700); // default to full speed
+    	RobotMap.driveTrainLeftMotor.configMotionCruiseVelocity(m_magDir, 0);  // speed in encoder units per 100ms
+    	RobotMap.driveTrainRightMotor.configMotionCruiseVelocity(m_magDir, 0);
+    	
+    	m_accel = (int) SmartDashboard.getNumber("Cruise Accel", 8100); //full speed in 1/3 sec
+    	int r_accel = (int) SmartDashboard.getNumber("Cruise R Accel", 10000); //full speed in 1/3 sec
+    	RobotMap.driveTrainLeftMotor.configMotionAcceleration(m_accel, 0); //want xPM in 1 sec, so x/60/10*4096 = 3072 units/100ms
+    	RobotMap.driveTrainRightMotor.configMotionAcceleration(r_accel, 0);
     	
     	// If we created this command without args, it should get its distance from the SmartDashboard:
+    	// (if not, it was already passed in from the parent CommandGroup and set in the constructor)
     	if (m_getDistFromSmartDashboard) { 
+    		m_distance = (int) SmartDashboard.getNumber("Cruise Dist", 18.849); // default:  one revolution of a 6" wheel is just short of 19"
     		System.out.println("Initializing drive distance from SmartDashboard");
-    		m_distance = (int) SmartDashboard.getNumber("Cruise Dist", 4096); // one revolution default
     	}
 
-    	//Set a timeout
-    	setTimeout(3);
+    	//Set a timeout value in seconds
+    	setTimeout(30);
+    	
+    	// initialize a loop iteration counter (used in isFinished(); see below)
+    	m_loopCount = 0;
+    	
+    	// Calculate the "encoder distance".  our command input is in something human-readable:  Inches.
+    	// But the HW PID controller wants distance in encoder units.
+    	m_encDistance = m_distance * DriveTrain.kEncoderTicksPerInch;
+    	
+    	//@HACK ALERT
+    	// The controller seems to insist on going twice the number of encoder ticks (so that the sensor position is 2x the request, and the err indicates a full 1x overrun
+    	// For now, resolve this by dividing the request by two...
+    	m_encDistance = m_encDistance/2;
+    	
+    	System.out.println("DriveWithPID has been reqeusted for " + m_distance + " inches, or " + m_encDistance + " encoder ticks");
     }
 
     // Called repeatedly when this Command is scheduled to run
     @Override
     protected void execute() {
-    	m_magDir = (int) SmartDashboard.getNumber("Cruise SpeedDir", 2700); // default to full speed
-    	RobotMap.driveTrainLeftMotor.configMotionCruiseVelocity(m_magDir, 0);  // want X rpm (X \ 60s/min /10 100ms/sec *4096 units/Rev = 3072 units/100ms)
-    	//RobotMap.driveTrainRightMotor.configMotionCruiseVelocity(Math.toIntExact(Math.round(m_magDir /60 /10 *4096)), 0);
-    	//RobotMap.driveTrainLeftFollower.configMotionCruiseVelocity(Math.toIntExact(Math.round(m_magDir /60 /10 *4096)), 0);
-    	//RobotMap.driveTrainRightFollower.configMotionCruiseVelocity(Math.toIntExact(Math.round(m_magDir /60 /10 *4096)), 0);
+    	// Just update the motor setpoints
+    	RobotMap.driveTrainLeftMotor.set(ControlMode.Position/*MotionMagic*/, m_encDistance);
+    	RobotMap.driveTrainRightMotor.set(ControlMode.Position, m_encDistance);
+    	//RobotMap.driveTrainLeftFollower.follow(RobotMap.driveTrainLeftMotor);
+    	//RobotMap.driveTrainRightFollower.follow(RobotMap.driveTrainRightMotor);
     	
-    	m_accel = (int) SmartDashboard.getNumber("Cruise Accel", 8100); //full speed in 1/3 sec
-    	RobotMap.driveTrainLeftMotor.configMotionAcceleration(m_accel, 0); //want xPM in 1 sec, so x/60/10*4096 = 3072 units/100ms
-    	//RobotMap.driveTrainRightMotor.configMotionAcceleration(Math.toIntExact(Math.round(m_accel /60 /10 *4096)), 0);
-    	//RobotMap.driveTrainLeftFollower.configMotionAcceleration(Math.toIntExact(Math.round(m_accel /60 /10 *4096)), 0);
-    	//RobotMap.driveTrainRightFollower.configMotionAcceleration(Math.toIntExact(Math.round(m_accel /60 /10 *4096)), 0);
-    	
-    	RobotMap.driveTrainLeftMotor.set(ControlMode.MotionMagic, m_distance);
-    	RobotMap.driveTrainRightMotor.follow(RobotMap.driveTrainLeftMotor); //Broken sensor :'-(
-    	RobotMap.driveTrainLeftFollower.follow(RobotMap.driveTrainLeftMotor);
-    	RobotMap.driveTrainRightFollower.follow(RobotMap.driveTrainLeftMotor);
+    	// Increment the loop count (used in isFinished(); see below)
+    	m_loopCount++;
    }
 
     // Make this return true when this Command no longer needs to run execute()
     @Override
     protected boolean isFinished() {
     	System.out.println(" FLerr: " + RobotMap.driveTrainLeftMotor.getClosedLoopError(0) +
-    						" out_pct: " + RobotMap.driveTrainLeftMotor.getMotorOutputPercent() +
-    						" CLTarget: " + RobotMap.driveTrainLeftMotor.getClosedLoopTarget(0) +
-    						" Pos: " + RobotMap.driveTrainLeftMotor.getSelectedSensorPosition(0) +
-    						" Vel: " + RobotMap.driveTrainLeftMotor.getSelectedSensorVelocity(0));
-    						
-    	//					" FRErr: " + RobotMap.driveTrainRightMotor.getClosedLoopError(0));
+    			" out_pct: " + RobotMap.driveTrainLeftMotor.getMotorOutputPercent() +
+    			" CLTarget: " + RobotMap.driveTrainLeftMotor.getClosedLoopTarget(0) +
+    			" Pos: " + RobotMap.driveTrainLeftMotor.getSelectedSensorPosition(0) +
+    			" Vel: " + RobotMap.driveTrainLeftMotor.getSelectedSensorVelocity(0) + "\n" +
+    			" FRerr: " + RobotMap.driveTrainRightMotor.getClosedLoopError(0) +
+    			" out_pct: " + RobotMap.driveTrainRightMotor.getMotorOutputPercent() +
+    			" CLTarget: " + RobotMap.driveTrainRightMotor.getClosedLoopTarget(0) +
+    			" Pos: " + RobotMap.driveTrainRightMotor.getSelectedSensorPosition(0) +
+    			" Vel: " + RobotMap.driveTrainRightMotor.getSelectedSensorVelocity(0));
+   						
     	//@FIXME:  Should finished be checking BOTH sensors??
-    	boolean distReached = (Math.abs(RobotMap.driveTrainLeftMotor.getSelectedSensorPosition(0) - m_distance) < DriveTrain.kToleranceDistUnits);
-        return isTimedOut(); //distReached; // Eventually OR in isTimedOut();
+    	
+    	// The most intuitive thing to check would be the closed loop error, and if it's less than the allowable error we're done.
+    	// However, the first ~5 iterations (@20ms, this is about 100ms) don't report accurate CLerr, so we'll avoid that and instead check if our sensor position is within the allowed error of the setpoint.
+    	// Unfortunately, the first iteration of the command hasn't yet actually seen the zeroed out sensor and will see whatever position was present prior to starting this command.
+    	// So, we need to skip checking anything on the first iteration.
+    	boolean distReached = (Math.abs(RobotMap.driveTrainLeftMotor.getSelectedSensorPosition(0) - m_encDistance) < DriveTrain.kToleranceDistUnits);
+    	
+    	if (m_loopCount > 1) //The first execute will inc to 1, so the first isFinished will see 1 as well.  this is the iteration we want to skip.
+    		return false; //distReached || isTimedOut();
+    	else
+    		return false; // On the first iteration, don't terminate (we have no valid data upon which to calculate a termination value!)
     }
 
     // Called once after isFinished returns true
     @Override
     protected void end() {
-    	RobotMap.driveTrainLeftMotor.set(0);
-    	RobotMap.driveTrainRightMotor.set(0);
-    	RobotMap.driveTrainLeftFollower.set(0);
-    	RobotMap.driveTrainRightFollower.set(0);
-    	Robot.driveTrain.setDriveMode();
+    	Robot.driveTrain.setOpenLoopMode(); // This also turns off the motors as part of the mode switch
     	
     }
 
@@ -141,8 +159,10 @@ public class DriveWithPID extends Command {
     protected void interrupted() {
     	end();
     }
-    //Member Variables
+    // Member Variables
     int m_magDir;
     int m_accel;
     boolean m_getDistFromSmartDashboard = false;
+    double m_loopCount;
+    double m_encDistance; // This is the requested distance in encoder ticks, as opposed to m_distance which is in inches.
 }

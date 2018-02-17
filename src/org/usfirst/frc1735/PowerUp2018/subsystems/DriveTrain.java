@@ -102,7 +102,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     	//-----------------------------
     	//PID values.values  F is feed-forward for maintaining rotational velocity.
     	// The last two args are input source and output object (our PIDwrite() function)
-        drivelineController = new PIDController(kLargeP, kLargeI, kLargeD, kLargeF, Robot.ahrs, this);
+        drivelineController = new PIDController(kLargeTurnP, kLargeTurnI, kLargeTurnD, kLargeTurnF, Robot.ahrs, this);
         drivelineController.setInputRange(-180.0f, 180.0f); // WHY IS THIS -180 to +180 RATHER THAN 0-360????
         drivelineController.setOutputRange(-0.75, 0.75); // What is the allowable range of values to send to the output (our motor rotation)
         drivelineController.setAbsoluteTolerance(kToleranceDegrees); // How close do we have to be in order to say we have reached the target?
@@ -117,22 +117,28 @@ public class DriveTrain extends Subsystem implements PIDOutput {
         //Expose these to the SmartDashboard (plus some debug turn parameters) for DEBUG ONLY:
     	SmartDashboard.putBoolean("TurnAbsolute", false); // Assume relative
     	SmartDashboard.putNumber("TurnAngle", 0); // Assuming relative, zero means no change.
-    	SmartDashboard.putNumber("TurnP", kLargeP);
-    	SmartDashboard.putNumber("TurnI", kLargeI);
-    	SmartDashboard.putNumber("TurnD", kLargeD);
+    	SmartDashboard.putNumber("TurnP", kLargeTurnP);
+    	SmartDashboard.putNumber("TurnI", kLargeTurnI);
+    	SmartDashboard.putNumber("TurnD", kLargeTurnD);
     	SmartDashboard.putNumber("TurnErr", kToleranceDegrees);
-
+    	
+    	//-----------------------------
     	//Hook up to the Limelight
+    	//-----------------------------
         table = NetworkTableInstance.getDefault().getTable("limelight");
         tx = table.getEntry("tx");
         ty = table.getEntry("ty");
         ta = table.getEntry("ta");
         
+    	//-----------------------------
+        // Talon open- and closed-loop configuration
+        //-----------------------------
+
         // Chose the sensor and direction
     	leftMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0); // extra args are:  primary closed loop, timeout in ms
-    	leftMotor.setSensorPhase(true); //Assumeinversion
+    	leftMotor.setSensorPhase(true); //Assume inversion
     	rightMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
-    	rightMotor.setSensorPhase(true); //Assume no inversion.
+    	rightMotor.setSensorPhase(true); //Assume inversion.
     	// Followers do not have sensors.
     	
     	// Voltage compensation mode should make 100% output request scale to 12V regardless of battery voltage.
@@ -142,95 +148,110 @@ public class DriveTrain extends Subsystem implements PIDOutput {
 
     	// Encoder setup:  Since we are using the CTRE Mag Encoders, we do not
     	// need to configure anything further
-        
-    }
-    
-    public void motionMagicInit() {
-    	// This function puts the drivetrain in Motion Magic control mode.
-    	// this allows us to use the Talon HW PID for positional control,
-    	// while still obeying the trapezoidal motion profile for acceleration
-    	// and maximum velocity.
     	
+    	// Closed-loop PID initialization/configuration
+    	//
     	// See full code example at https://github.com/CrossTheRoadElec/FRC-Examples-STEAMWORKS/blob/master/JAVA_MotionMagicExample/src/org/usfirst/frc/team217/robot/Robot.java
-    	    	
-		/* set the peak and nominal outputs, -1 to 1 in percentage of nominal voltage (even if battery voltage is higher)*/
-    	leftMotor.configNominalOutputForward(0.1, 0);
-    	leftMotor.configNominalOutputReverse(-0.1, 0);
+
+    	// set the peak and nominal outputs, -1 to 1 in percentage of nominal voltage (even if battery voltage is higher)
+    	leftMotor.configNominalOutputForward(0.0, 0);
+    	leftMotor.configNominalOutputReverse(-0.0, 0);
     	leftMotor.configPeakOutputForward(1.0,0);
     	leftMotor.configPeakOutputReverse(-1.0,0);
-    	//rightMotor.configNominalOutputForward(0.2, 0);
-    	//rightMotor.configNominalOutputReverse(-0.2, 0);
-//    	rightMotor.configPeakOutputForward(1.0,0);
-//    	rightMotor.configPeakOutputReverse(-1.0,0);
-//    	leftFollower.configNominalOutputForward(0.2, 0);
-//    	leftFollower.configNominalOutputReverse(-0.2, 0);
-//    	leftFollower.configPeakOutputForward(1.0,0);
-//    	leftFollower.configPeakOutputReverse(-1.0,0);
-//    	rightFollower.configNominalOutputForward(0.2, 0);
-//    	rightFollower.configNominalOutputReverse(-0.2, 0);
-//    	rightFollower.configPeakOutputForward(1.0,0);
-//    	rightFollower.configPeakOutputReverse(-1.0,0);
-    	    
-    	// Right motor must spin opposite of left when in temporary slave mode
-    	rightMotor.setInverted(true);
-    	rightFollower.setInverted(true);
-   	
-    	/* set closed loop gains in slot0 - see documentation */
+    	rightMotor.configNominalOutputForward(0.0, 0);
+    	rightMotor.configNominalOutputReverse(-0.0, 0);
+    	rightMotor.configPeakOutputForward(1.0,0);
+    	rightMotor.configPeakOutputReverse(-1.0,0);
+
+    	// set closed loop gains in slot0 - see documentation
     	leftMotor.selectProfileSlot(0,0);
-//    	rightMotor.selectProfileSlot(0,0);
-//    	leftFollower.selectProfileSlot(0,0);
-//    	rightFollower.selectProfileSlot(0,0);
-    	
-		/* set acceleration and vcruise velocity - see documentation */
+    	rightMotor.selectProfileSlot(0,0);
+
+    	// set acceleration and vcruise velocity - see documentation
     	leftMotor.configMotionCruiseVelocity(2700, 0); // 2700 encoder units per 100ms interval is about 395 RPM
-//    	rightMotor.configMotionCruiseVelocity(2700, 0);
-//    	leftFollower.configMotionCruiseVelocity(2700, 0);
-//    	rightFollower.configMotionCruiseVelocity(2700, 0);
-    	
-    	leftMotor.configMotionAcceleration(8100, 0); //want to get to full speed in 1/3 sec, so same as cruise velocity
-//    	rightMotor.configMotionAcceleration(2700, 0); 
-//    	leftFollower.configMotionAcceleration(2700, 0);
-//    	rightFollower.configMotionAcceleration(2700, 0);
+    	rightMotor.configMotionCruiseVelocity(2700, 0);
+
+    	// It's not clear how the MotionAcceleration and the ClosedloopRamp differ...
+    	leftMotor.configMotionAcceleration(8100, 0); //want to get to full speed in 1/3 sec, so triple the velocity
+    	rightMotor.configMotionAcceleration(8100, 0); 
 
     	// Set the closed loop ramp as well (time in seconds to full speed; timeout)
-    	leftMotor.configClosedloopRamp(0.333, 0); //want to get to full speed in 1/3 sec, so same as cruise velocity
-    	leftMotor.configOpenloopRamp(0.333, 0); //want to get to full speed in 1/3 sec, so same as cruise velocity
+    	leftMotor.configClosedloopRamp(0.333, 0); //want to get to full speed in 1/3 sec
+    	leftMotor.configOpenloopRamp(0.333, 0);
+    	rightMotor.configClosedloopRamp(0.333, 0);
+    	rightMotor.configOpenloopRamp(0.333, 0);
+
+
+    	//Set the closed-loop allowable error.  Empirically on no-load, error was <50 units.
+    	leftMotor.configAllowableClosedloopError(0, kToleranceDistUnits, 0); // index, err, timeout in ms
+    	rightMotor.configAllowableClosedloopError(0, kToleranceDistUnits, 0); // index, err, timeout in ms
+
+    	// Throw a lot of settings up on the SmartDashboard...
+    	SmartDashboard.putNumber("Cruise SpeedDir", 2700); // speed in units per 100ms (2745 is full speed)
+    	SmartDashboard.putNumber("Cruise Dist", 72); // inches (DriveWithPID will convert to encoder ticks)
+    	SmartDashboard.putNumber("Cruise Accel", 8100); //1/3 sec to get to full speed
+    	SmartDashboard.putNumber("Cruise R Accel", 10000);     	//Temporary to allow setting left vs right accel separately
+    	SmartDashboard.putNumber("P", kDistP);
+    	SmartDashboard.putNumber("I", kDistI);
+    	SmartDashboard.putNumber("D", kDistD);
+    	SmartDashboard.putNumber("F", kDistF);
     	
-    	// Put the talons in "Brake" mode
+    	leftFollower.setSafetyEnabled(false);
+    	rightFollower.setSafetyEnabled(false);
+    	
+    	// Default to be in "drive by joystick" mode
+    	setOpenLoopMode();
+    }
+    
+    public void setOpenLoopMode() {
+    	// This function does the Talon configuration changes to allow operation in an open-loop mode
+    	// (Which is what we use for joystick control)
+    	
+    	//In this mode, we use the DifferentialDrive WPI library... which does the right motor inversion in software, so we have to turn the hardware inversion off here:
+    	rightMotor.setInverted(false);
+    	rightFollower.setInverted(false);
+
+    	// Set our mode to be the open-loop drive-by-joystick behavior:
+    	leftMotor.set(ControlMode.PercentOutput, 0); // Mode, setpoint
+    	rightMotor.set(ControlMode.PercentOutput, 0); // Mode, setpoint
+    	leftFollower.set(ControlMode.PercentOutput, 0); // Mode, setpoint
+    	rightFollower.set(ControlMode.PercentOutput, 0); // Mode, setpoint
+
+    	// Put the Talons in "Coast" mode
+    	leftMotor.setNeutralMode(NeutralMode.Coast);
+    	rightMotor.setNeutralMode(NeutralMode.Coast);
+    	leftFollower.setNeutralMode(NeutralMode.Coast);
+    	rightFollower.setNeutralMode(NeutralMode.Coast);
+    }
+
+    public void setPIDMode() {
+    	// This function does the Talon configuration changes to allow operation in a closed-loop PID mode.
+    	// this allows us to use the Talon HW PID for positional control,
+    	// and if in MotionMagic mode, it will also obey the trapezoidal motion profile for acceleration
+    	// and maximum velocity.
+
+    	// In closed-loop mode we talk to the motor controllers directly, and don't get the inversion of the right-hand motors that's implemented
+    	// in the WPIlib DifferentialDrive class.  So, we have to invert the motor controller hardware directly:
+    	rightMotor.setInverted(true);
+    	rightFollower.setInverted(true);
+    	
+       	//Set the mode to Magic (for the master; slaves match for now).  Second arg is the setpoint.
+        leftMotor.set(ControlMode.Position, 0);
+        rightMotor.set(ControlMode.Position, 0);
+        leftFollower.follow(leftMotor);
+        rightFollower.follow(rightMotor);
+   	
+    	// Put the Talons in "Brake" mode for better accuracy
     	leftMotor.setNeutralMode(NeutralMode.Brake);
     	rightMotor.setNeutralMode(NeutralMode.Brake);
     	leftFollower.setNeutralMode(NeutralMode.Brake);
     	rightFollower.setNeutralMode(NeutralMode.Brake);
-   	     	    	
-    	//Set the mode to Magic (for the master; slaves match for now).  Second arg is the setpoint.
-        leftMotor.set(ControlMode.Position /*MotionMagic*/, 0);
-        rightMotor.follow(leftMotor); //Broken sensor.  :'-(
-        leftFollower.follow(leftMotor);
-        rightFollower.follow(leftMotor);
-        
-        // Zero out the relative sensors
-        leftMotor.setSelectedSensorPosition(0,0,0);// position, PIDidx (0= normal), timeout in ms
-        rightMotor.setSelectedSensorPosition(0,0,0);// position, PIDidx (0= normal), timeout in ms
-
-        //Set the closed-loop allowable error.  Empirically on no-load, error was <50 units.
-        leftMotor.configAllowableClosedloopError(0, kToleranceDistUnits, 0); // index, err, timeout in ms
-        rightMotor.configAllowableClosedloopError(0, kToleranceDistUnits, 0); // index, err, timeout in ms
-//        leftFollower.configAllowableClosedloopError(0, 50, 0); // index, err, timeout in ms
-//        rightFollower.configAllowableClosedloopError(0, 50, 0); // index, err, timeout in ms
+ 
+    	// Zero out the relative sensors
+        leftMotor.setSelectedSensorPosition(0,0,0); // position, PIDidx (0= normal), timeout in ms
+        rightMotor.setSelectedSensorPosition(0,0,0); // position, PIDidx (0= normal), timeout in ms
+   	
     }
-
-public void setDriveMode() {
-	 // Return PID mode to the normal drive-by-joystick behavior:
-    leftMotor.set(ControlMode.PercentOutput, 0); // Mode, setpoint
-    rightMotor.set(ControlMode.PercentOutput, 0); // Mode, setpoint
-    leftFollower.set(ControlMode.PercentOutput, 0); // Mode, setpoint
-    rightFollower.set(ControlMode.PercentOutput, 0); // Mode, setpoint
-	// Right motor must spin opposite of left when in temporary slave mode
-	rightMotor.setInverted(false);
-	// Right motor must spin opposite of left when in temporary slave mode
-	rightFollower.setInverted(false);
-
-}
 
     // Put methods for controlling this subsystem
     // here. Call these from Commands.
@@ -271,6 +292,10 @@ public void setDriveMode() {
 
 		// Print the raw joystick inputs
 		//System.out.println("Raw Values:  joyLeftY="+joyLeftY+" joyLeftX="+joyLeftX + " joyRightY="+joyRightY+" joyRightX="+joyRightX);
+		SmartDashboard.putNumber("JoyLX", joyLeftX);
+		SmartDashboard.putNumber("JoyLY", joyLeftY);
+		SmartDashboard.putNumber("JoyRX", joyRightX);
+		SmartDashboard.putNumber("JoyRY", joyRightY);
 		
 		// Apply the 'dead zone' guardband to the joystick inputs:
 		// Centered joysticks may not actually read as zero due to spring variances.
@@ -345,20 +370,19 @@ public void setDriveMode() {
        m_rotateToAngleRate = output;
    }
    
-   public void setSmallPID() {
-	   double d = SmartDashboard.getNumber("TurnD", 0);
-	   drivelineController.setPID(kSmallP, kSmallI, d, kSmallF);
-	   drivelineController.setOutputRange(-kSmallPIDOutputMax, kSmallPIDOutputMax); // What is the allowable range of values to send to the output (our motor rotation)
+   public void setSmallTurnPID() {
+	   drivelineController.setPID(kSmallTurnP, kSmallTurnI, kSmallTurnD, kSmallTurnF);
+	   drivelineController.setOutputRange(-kSmallTurnPIDOutputMax, kSmallTurnPIDOutputMax); // What is the allowable range of values to send to the output (our motor rotation)
    }
    
-   public void setMedPID() {
-	   drivelineController.setPID(kMedP, kMedI, kMedD, kMedF);
-	   drivelineController.setOutputRange(-kMedPIDOutputMax, kMedPIDOutputMax); // What is the allowable range of values to send to the output (our motor rotation)
+   public void setMedTurnPID() {
+	   drivelineController.setPID(kMedTurnP, kMedTurnI, kMedTurnD, kMedTurnF);
+	   drivelineController.setOutputRange(-kMedTurnPIDOutputMax, kMedTurnPIDOutputMax); // What is the allowable range of values to send to the output (our motor rotation)
    }
 
-   public void setLargePID() {
-	   drivelineController.setPID(kLargeP, kLargeI, kLargeD, kLargeF);
-	   drivelineController.setOutputRange(-kLargePIDOutputMax, kLargePIDOutputMax); // What is the allowable range of values to send to the output (our motor rotation)
+   public void setLargeTurnPID() {
+	   drivelineController.setPID(kLargeTurnP, kLargeTurnI, kLargeTurnD, kLargeTurnF);
+	   drivelineController.setOutputRange(-kLargeTurnPIDOutputMax, kLargeTurnPIDOutputMax); // What is the allowable range of values to send to the output (our motor rotation)
    }
 
 	
@@ -397,25 +421,31 @@ public void setDriveMode() {
     static final double kToleranceDegrees = 0.25; // Stop if we are within this many degrees of the setpoint.
     public static final int kToleranceDistUnits = 50; // stop if we are within this many encoder units of our setpoint.
 
-    static final double kLargeP = 0.0165;
-    static final double kLargeI = 0.001504;
-    static final double kLargeD = 0.00;
-    static final double kLargeF = 0.00;
-    public static final double kLargePIDOutputMax = 0.55; // Max motor output in large PID mode
+    static final double kLargeTurnP = 0.0165;
+    static final double kLargeTurnI = 0.001504;
+    static final double kLargeTurnD = 0.00;
+    static final double kLargeTurnF = 0.00;
+    public static final double kLargeTurnPIDOutputMax = 0.55; // Max motor output in large PID mode
 
-    public static final double kMedPIDLimit = 10.0; // Errors smaller than this number of degrees should use the medium PID profile
-    static final double kMedP = 0.25; //use a very large (relative to normal) P to guarantee max motor output
-    static final double kMedI = 0.00;
-    static final double kMedD = 0.05;
-    static final double kMedF = 0.00;
-    public static final double kMedPIDOutputMax = 0.225; // Max motor output in small PID mode
+    public static final double kMedTurnPIDLimit = 10.0; // Errors smaller than this number of degrees should use the medium PID profile
+    static final double kMedTurnP = 0.25; //use a very large (relative to normal) P to guarantee max motor output
+    static final double kMedTurnI = 0.00;
+    static final double kMedTurnD = 0.05;
+    static final double kMedTurnF = 0.00;
+    public static final double kMedTurnPIDOutputMax = 0.225; // Max motor output in medium PID mode
 
-    public static final double kSmallPIDLimit = 1.5; // Errors smaller than this number of degrees should use the small PID profile
-    static final double kSmallP = 0.5; //use a very large (relative to normal) P to guarantee max motor output
-    static final double kSmallI = 0.00;
-    static final double kSmallD = 0.05;
-    static final double kSmallF = 0.00;
-    public static final double kSmallPIDOutputMax = 0.1475; // Max motor output in small PID mode
+    public static final double kSmallTurnPIDLimit = 1.5; // Errors smaller than this number of degrees should use the small PID profile
+    static final double kSmallTurnP = 0.5; //use a very large (relative to normal) P to guarantee max motor output
+    static final double kSmallTurnI = 0.00;
+    static final double kSmallTurnD = 0.05;
+    static final double kSmallTurnF = 0.00;
+    public static final double kSmallTurnPIDOutputMax = 0.1475; // Max motor output in small PID mode
 
+    /* Hardware PID values for the Talon */
+    static final double kDistP = 0.4;//0.995 on 2017 robot
+    static final double kDistI = 0.0;//0.005 on 2017 robot
+    static final double kDistD = 0.00;
+    static final double kDistF = 0.3789;
+    public static final double kEncoderTicksPerInch = (4096 / (3.1415 * 6)); // 4096 encoder ticks per revolution; wheel diameter is nominally 6"
 }
 

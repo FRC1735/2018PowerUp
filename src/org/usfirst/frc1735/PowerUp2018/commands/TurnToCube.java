@@ -97,16 +97,16 @@ public class TurnToCube extends Command {
     	double err = Robot.driveTrain.drivelineController.getError();
     	// For small errors (say, less than 5 degrees), run the PID with a low max and a high P-- this gets us a pretty constant but slow speed for small adjustments
     	// This avoids the "small P -> small motor values -> rely on very slow I values to get to the target
-    	if (Math.abs(err) < Robot.driveTrain.kSmallPIDLimit /*degrees*/) {
-    		Robot.driveTrain.setSmallPID();
+    	if (Math.abs(err) < Robot.driveTrain.kSmallTurnPIDLimit /*degrees*/) {
+    		Robot.driveTrain.setSmallTurnPID();
     		SmartDashboard.putString("PID Mode", "Small");
     	}
-    	else if (Math.abs(err) < Robot.driveTrain.kMedPIDLimit /*degrees*/) {
-    		Robot.driveTrain.setMedPID();
+    	else if (Math.abs(err) < Robot.driveTrain.kMedTurnPIDLimit /*degrees*/) {
+    		Robot.driveTrain.setMedTurnPID();
     		SmartDashboard.putString("PID Mode", "Med");
     	}
     	else {
-    		Robot.driveTrain.setLargePID(); // Otherwise use the normal PID values  
+    		Robot.driveTrain.setLargeTurnPID(); // Otherwise use the normal PID values  
     		SmartDashboard.putString("PID Mode", "Large");
     	}
     	RobotMap.driveTrainDifferentialDrive1.tankDrive(Robot.driveTrain.m_rotateToAngleRate, -Robot.driveTrain.m_rotateToAngleRate, false);
