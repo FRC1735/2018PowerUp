@@ -82,8 +82,8 @@ public class Robot extends TimedRobot {
         // Set an initial value for SmartDashboard's joystick deadzone variable
     	SmartDashboard.putNumber("Joystick Deadzone", m_joystickFilter);
 
-    	//Force the robot into Tank mode on startup (also updates SmartDashboard)
-    	Robot.driveTrain.setTankMode();
+    	//Force the robot into Arcade mode on startup (also updates SmartDashboard)
+    	Robot.driveTrain.setArcadeMode();
     	
     	//Set an initial value for SquaredInputs (which is used for joystick routines to provide increased sensitivity at low speeds)
     	SmartDashboard.putBoolean("SquaredInputs", true);
