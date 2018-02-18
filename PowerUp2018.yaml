@@ -68,6 +68,28 @@ Children:
           name: Safety Enabled, validators: null, value: true}
       Base: Differential Drive
       Name: Differential Drive 1
+    - Children: []
+      Properties:
+        CAN ID: !!robotbuilder.data.properties.ChoicesProperty
+          choices: &id003 ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+            '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22',
+            '23', '24', '25', '26', '27', '28', '29', '30', '31']
+          default: '2'
+          name: CAN ID
+          validators: &id004 [CANID]
+          value: '6'
+      Base: Victor SPX
+      Name: LeftFollowerVictor
+    - Children: []
+      Properties:
+        CAN ID: !!robotbuilder.data.properties.ChoicesProperty
+          choices: *id003
+          default: '2'
+          name: CAN ID
+          validators: *id004
+          value: '7'
+      Base: Victor SPX
+      Name: RightFollowerVictor
     Properties:
       Send to SmartDashboard: !!robotbuilder.data.properties.BooleanProperty {default: false,
         name: Send to SmartDashboard, validators: null, value: false}
@@ -128,7 +150,7 @@ Children:
           validators: null
           value: []
         Button: !!robotbuilder.data.properties.ChoicesProperty
-          choices: &id003 ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
+          choices: &id005 ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
             '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23',
             '24', '25', '26', '27', '28', '29', '30', '31', '32']
           default: '1'
@@ -139,10 +161,10 @@ Children:
           default: None
           name: Command
           type: Command
-          validators: &id004 [TypeDropdownSelected]
+          validators: &id006 [TypeDropdownSelected]
           value: EnterTankMode
         When to Run: !!robotbuilder.data.properties.ChoicesProperty
-          choices: &id005 [whileHeld, whenPressed, whenReleased]
+          choices: &id007 [whileHeld, whenPressed, whenReleased]
           default: whileHeld
           name: When to Run
           validators: null
@@ -159,7 +181,7 @@ Children:
           validators: null
           value: []
         Button: !!robotbuilder.data.properties.ChoicesProperty
-          choices: *id003
+          choices: *id005
           default: '1'
           name: Button
           validators: null
@@ -168,10 +190,10 @@ Children:
           default: None
           name: Command
           type: Command
-          validators: *id004
+          validators: *id006
           value: EnterArcadeMode
         When to Run: !!robotbuilder.data.properties.ChoicesProperty
-          choices: *id005
+          choices: *id007
           default: whileHeld
           name: When to Run
           validators: null
@@ -180,30 +202,30 @@ Children:
       Name: ArcadeMode
     Properties:
       Number: !!robotbuilder.data.properties.ChoicesProperty
-        choices: &id006 ['0', '1', '2', '3', '4', '5']
+        choices: &id008 ['0', '1', '2', '3', '4', '5']
         default: 1
         name: Number
-        validators: &id007 [Joystick]
+        validators: &id009 [Joystick]
         value: '0'
     Base: Joystick
     Name: JoyLeft
   - Children: []
     Properties:
       Number: !!robotbuilder.data.properties.ChoicesProperty
-        choices: *id006
+        choices: *id008
         default: 1
         name: Number
-        validators: *id007
+        validators: *id009
         value: '1'
     Base: Joystick
     Name: JoyRight
   - Children: []
     Properties:
       Number: !!robotbuilder.data.properties.ChoicesProperty
-        choices: *id006
+        choices: *id008
         default: 1
         name: Number
-        validators: *id007
+        validators: *id009
         value: '2'
     Base: Joystick
     Name: Operator
@@ -489,6 +511,45 @@ Children:
         name: Button on SmartDashboard, validators: null, value: false}
     Base: Command
     Name: ElevatorWithJoystick
+  - Children: []
+    Properties:
+      Autonomous Selection: !!robotbuilder.data.properties.BooleanProperty {default: false,
+        name: Autonomous Selection, validators: null, value: false}
+      Parameters: !!robotbuilder.data.properties.ParametersProperty
+        default: []
+        name: Parameters
+        validators: null
+        value:
+        - !!robotbuilder.data.properties.ParameterDescriptor {name: height, type: int}
+      Run When Disabled: !!robotbuilder.data.properties.BooleanProperty {default: false,
+        name: Run When Disabled, validators: null, value: false}
+      Requires: !!robotbuilder.data.properties.TypeSelectionProperty {default: None,
+        name: Requires, type: Subsystem, validators: null, value: Elevator}
+      Parameter presets: !!robotbuilder.data.properties.ParameterSetProperty
+        default: &id010
+        - !!robotbuilder.data.properties.ParameterSet
+          name: 'load '
+          parameters:
+          - {name: height, type: int, value: '0'}
+        - !!robotbuilder.data.properties.ParameterSet
+          name: switch
+          parameters:
+          - {name: height, type: int, value: '24'}
+        - !!robotbuilder.data.properties.ParameterSet
+          name: scale
+          parameters:
+          - {name: height, type: int, value: '66'}
+        - !!robotbuilder.data.properties.ParameterSet
+          name: climb
+          parameters:
+          - {name: height, type: int, value: '84'}
+        name: Parameter presets
+        validators: null
+        value: *id010
+      Button on SmartDashboard: !!robotbuilder.data.properties.BooleanProperty {default: true,
+        name: Button on SmartDashboard, validators: null, value: true}
+    Base: Command
+    Name: ElevatorwithPID
   Properties: {}
   Base: Commands
   Name: Commands

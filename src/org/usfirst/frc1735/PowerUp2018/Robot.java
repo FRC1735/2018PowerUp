@@ -81,6 +81,9 @@ public class Robot extends TimedRobot {
         
         // Set an initial value for SmartDashboard's joystick deadzone variable
     	SmartDashboard.putNumber("Joystick Deadzone", m_joystickFilter);
+    	
+    	//Competition and practice robots have different followers for the drivetrain.  (practice is talon, competition is victor)
+    	SmartDashboard.putBoolean("PracticeBot", true);
 
     	//Force the robot into Arcade mode on startup (also updates SmartDashboard)
     	Robot.driveTrain.setArcadeMode();
@@ -106,8 +109,8 @@ public class Robot extends TimedRobot {
 	    }
     	ahrs.zeroYaw(); // Init the gyro to zero degrees
     	
-    	driveTrain.drivetrainInit(); //Initialize the HW and SW PID controllers for the drivetrain
-    	
+    	//Run some boot-time drivetrain initializtion (some final init will happen at teleop/autonomous init
+    	Robot.driveTrain.drivetrainInit();
     }
 
     /**
@@ -116,7 +119,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void disabledInit(){
-
+    	Robot.driveTrain.m_lateInitHasRun = false; // clear when we disable, so we can change practicebot setting if someone fouled it up the first time.
     }
 
     @Override
@@ -126,6 +129,9 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
+    	// Some late initialization that happens between robotInit() and actual robot enable
+    	Robot.driveTrain.lateInit();
+    	
        autonomousCommand = chooser.getSelected();
         // schedule the autonomous command (example)
         if (autonomousCommand != null) autonomousCommand.start();
@@ -146,6 +152,10 @@ public class Robot extends TimedRobot {
         // continue until interrupted by another command, remove
         // this line or comment it out.
         if (autonomousCommand != null) autonomousCommand.cancel();
+        
+    	// Some late initialization that happens between robotInit() and actual robot enable
+    	Robot.driveTrain.lateInit();
+
     }
 
     /**

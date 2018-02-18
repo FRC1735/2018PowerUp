@@ -50,7 +50,7 @@ public class DriveWithPID extends Command {
 
     //Void constructor gets distance from SmartDashboard.  Allows us to use a button (w/ no preset) to call the command
     public DriveWithPID() {
-    	System.out.println("DriveWithPID Null constructor called");
+    	//System.out.println("DriveWithPID Null constructor called");
     	m_getDistFromSmartDashboard = true;
         requires(Robot.driveTrain);
         // Init dynamic variable
@@ -110,11 +110,8 @@ public class DriveWithPID extends Command {
     @Override
     protected void execute() {
     	// Just update the motor setpoints
-       	//@HACK ALERT
-    	// The controller seems to insist on going twice the number of encoder ticks (so that the sensor position is 2x the request, and the err indicates a full 1x overrun
-    	// For now, resolve this by dividing the request by two...
-    	RobotMap.driveTrainLeftMotor.set(ControlMode.Position/*MotionMagic*/, m_encDistance/2);
-    	RobotMap.driveTrainRightMotor.set(ControlMode.Position, m_encDistance/2);
+    	RobotMap.driveTrainLeftMotor.set(ControlMode.Position/*MotionMagic*/, m_encDistance);
+    	RobotMap.driveTrainRightMotor.set(ControlMode.Position, m_encDistance);
     	
     	// Increment the loop count (used in isFinished(); see below)
     	m_loopCount++;
