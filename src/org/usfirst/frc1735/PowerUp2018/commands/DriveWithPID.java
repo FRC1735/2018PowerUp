@@ -110,8 +110,8 @@ public class DriveWithPID extends Command {
     @Override
     protected void execute() {
     	// Just update the motor setpoints
-    	RobotMap.driveTrainLeftMotor.set(ControlMode.Position/*MotionMagic*/, m_encDistance);
-    	RobotMap.driveTrainRightMotor.set(ControlMode.Position, m_encDistance);
+    	RobotMap.driveTrainLeftMotor.set(ControlMode./*Position*/MotionMagic, m_encDistance);
+    	RobotMap.driveTrainRightMotor.set(ControlMode.MotionMagic, m_encDistance);
     	
     	// Increment the loop count (used in isFinished(); see below)
     	m_loopCount++;

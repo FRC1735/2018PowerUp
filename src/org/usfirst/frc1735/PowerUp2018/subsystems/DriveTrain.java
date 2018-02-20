@@ -115,21 +115,35 @@ public class DriveTrain extends Subsystem implements PIDOutput {
         /* Typically, only the P value needs to be modified.                   */
         LiveWindow.addActuator("DriveSystem", "RotateController", drivelineController);
         
-        //Expose these to the SmartDashboard (plus some debug turn parameters) for DEBUG ONLY:
-    	SmartDashboard.putBoolean("TurnAbsolute", false); // Assume relative
+        //Expose these to the SmartDashboard for DEBUG ONLY:
+    	SmartDashboard.putBoolean("TurnAbsolute", true); // Assume absolute mode
     	SmartDashboard.putNumber("TurnAngle", 0); // Assuming relative, zero means no change.
-    	SmartDashboard.putNumber("TurnP", kLargeTurnP);
-    	SmartDashboard.putNumber("TurnI", kLargeTurnI);
-    	SmartDashboard.putNumber("TurnD", kLargeTurnD);
+    	SmartDashboard.putNumber("TurnLP", kLargeTurnP);
+    	SmartDashboard.putNumber("TurnLI", kLargeTurnI);
+    	SmartDashboard.putNumber("TurnLD", kLargeTurnD);
+    	SmartDashboard.putNumber("TurnLMax", kLargeTurnPIDOutputMax);
+    	SmartDashboard.putNumber("TurnMP", kMedTurnP);
+    	SmartDashboard.putNumber("TurnMI", kMedTurnI);
+    	SmartDashboard.putNumber("TurnMD", kMedTurnD);
+    	SmartDashboard.putNumber("TurnMMax", kMedTurnPIDOutputMax);
+    	SmartDashboard.putNumber("TurnSP", kSmallTurnP);
+    	SmartDashboard.putNumber("TurnSI", kSmallTurnI);
+    	SmartDashboard.putNumber("TurnSD", kSmallTurnD);
+    	SmartDashboard.putNumber("TurnSMax", kSmallTurnPIDOutputMax);
+    	
     	SmartDashboard.putNumber("TurnErr", kToleranceDegrees);
     	
     	//-----------------------------
     	//Hook up to the Limelight
     	//-----------------------------
         table = NetworkTableInstance.getDefault().getTable("limelight");
-        tx = table.getEntry("tx");
-        ty = table.getEntry("ty");
-        ta = table.getEntry("ta");
+        tv = table.getEntry("tv"); // valid bit (target is detected)        
+        tx = table.getEntry("tx"); // Horizontal angle to target in degrees
+        ty = table.getEntry("ty"); // vertical angle to target in degrees
+        ta = table.getEntry("ta"); // Area of target relative to full screen image in percent
+        tx0 = table.getEntry("tx0"); // one of three raw Tx values.
+        tx1 = table.getEntry("tx1"); // one of three raw Tx values.
+        tx2 = table.getEntry("tx2"); // one of three raw Tx values.
         
     	//-----------------------------
         // Talon open- and closed-loop configuration
@@ -271,18 +285,22 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     	rightMotor.set(ControlMode.PercentOutput, 0); // Mode, setpoint
 
     	// Put the Talons in "Coast" mode
-    	//leftMotor.setNeutralMode(NeutralMode.Coast);
-    	//rightMotor.setNeutralMode(NeutralMode.Coast);
+    	leftMotor.setNeutralMode(NeutralMode.Coast);
+    	rightMotor.setNeutralMode(NeutralMode.Coast);
         if (isPractice) {
         	// Practice
-        	//leftFollower.setNeutralMode(NeutralMode.Coast);
-        	//rightFollower.setNeutralMode(NeutralMode.Coast);
+        	leftFollower.setNeutralMode(NeutralMode.Coast);
+        	rightFollower.setNeutralMode(NeutralMode.Coast);
         }
         else {
         	// Competition
-        	//leftFollowerVictor.setNeutralMode(NeutralMode.Coast);
-        	//rightFollowerVictor.setNeutralMode(NeutralMode.Coast);
+        	leftFollowerVictor.setNeutralMode(NeutralMode.Coast);
+        	rightFollowerVictor.setNeutralMode(NeutralMode.Coast);
         }
+        
+        // When driving in Open Loop mode via the differentialDrive object, turn on the WPILib safety checks
+        differentialDrive1.setSafetyEnabled(true);
+
     }
 
     public void setPIDMode() {
@@ -307,8 +325,8 @@ public class DriveTrain extends Subsystem implements PIDOutput {
         }
     	
        	//Set the mode to Magic (for the master; slaves match for now).  Second arg is the setpoint.
-        leftMotor.set(ControlMode.Position, 0);
-        rightMotor.set(ControlMode.Position, 0);
+        leftMotor.set(ControlMode.MotionMagic, 0);
+        rightMotor.set(ControlMode.MotionMagic, 0);
    	
     	// Put the Talons in "Brake" mode for better accuracy
     	leftMotor.setNeutralMode(NeutralMode.Brake);
@@ -328,6 +346,8 @@ public class DriveTrain extends Subsystem implements PIDOutput {
         leftMotor.setSelectedSensorPosition(0,0,0); // position, PIDidx (0= normal), timeout in ms
         rightMotor.setSelectedSensorPosition(0,0,0); // position, PIDidx (0= normal), timeout in ms
    	
+        // When driving in PID mode, turn off the WPILib safety checks
+        differentialDrive1.setSafetyEnabled(false);
     }
 
     // Put methods for controlling this subsystem
@@ -448,24 +468,50 @@ public class DriveTrain extends Subsystem implements PIDOutput {
    }
    
    public void setSmallTurnPID() {
-	   drivelineController.setPID(kSmallTurnP, kSmallTurnI, kSmallTurnD, kSmallTurnF);
-	   drivelineController.setOutputRange(-kSmallTurnPIDOutputMax, kSmallTurnPIDOutputMax); // What is the allowable range of values to send to the output (our motor rotation)
+   	double p = SmartDashboard.getNumber("TurnSP", kSmallTurnP);
+   	double i = SmartDashboard.getNumber("TurnSI", kSmallTurnI);
+   	double d = SmartDashboard.getNumber("TurnSD", kSmallTurnD);
+   	double max = SmartDashboard.getNumber("TurnSMax", kSmallTurnPIDOutputMax);
+
+	   drivelineController.setPID(p,i,d, kSmallTurnF);
+	   drivelineController.setOutputRange(-max, max); // What is the allowable range of values to send to the output (our motor rotation)
    }
    
    public void setMedTurnPID() {
-	   drivelineController.setPID(kMedTurnP, kMedTurnI, kMedTurnD, kMedTurnF);
-	   drivelineController.setOutputRange(-kMedTurnPIDOutputMax, kMedTurnPIDOutputMax); // What is the allowable range of values to send to the output (our motor rotation)
+	   	double p = SmartDashboard.getNumber("TurnMP", kMedTurnP);
+	   	double i = SmartDashboard.getNumber("TurnMI", kMedTurnI);
+	   	double d = SmartDashboard.getNumber("TurnMD", kMedTurnD);
+	   	double max = SmartDashboard.getNumber("TurnMMax", kMedTurnPIDOutputMax);
+
+	   drivelineController.setPID(p,i,d, kMedTurnF);
+	   drivelineController.setOutputRange(-max, max); // What is the allowable range of values to send to the output (our motor rotation)
    }
 
    public void setLargeTurnPID() {
-	   //System.out.println("TurnP from Dashboard = " + SmartDashboard.getNumber("TurnP", 0.14));
-	   drivelineController.setPID(kLargeTurnP, kLargeTurnI, kLargeTurnD, kLargeTurnF);
-	   drivelineController.setOutputRange(-kLargeTurnPIDOutputMax, kLargeTurnPIDOutputMax); // What is the allowable range of values to send to the output (our motor rotation)
+	   	double p = SmartDashboard.getNumber("TurnLP", kLargeTurnP);
+	   	double i = SmartDashboard.getNumber("TurnLI", kLargeTurnI);
+	   	double d = SmartDashboard.getNumber("TurnLD", kLargeTurnD);
+	   	double max = SmartDashboard.getNumber("TurnLMax", kLargeTurnPIDOutputMax);
+
+	   drivelineController.setPID(p,i,d, kLargeTurnF);
+	   drivelineController.setOutputRange(-max, max); // What is the allowable range of values to send to the output (our motor rotation)
    }
 
+   public double getTv() {
+   	return tv.getDouble(0); // Valid bit
+   }
 	
     public double getTx() {
     	return tx.getDouble(0);
+    }
+    public double getTx0() {
+    	return tx0.getDouble(0);
+    }
+    public double getTx1() {
+    	return tx1.getDouble(0);
+    }
+    public double getTx2() {
+    	return tx2.getDouble(0);
     }
 
     public double getTy() {
@@ -475,8 +521,9 @@ public class DriveTrain extends Subsystem implements PIDOutput {
 
 	// Member Variables
     boolean m_isInTankMode = false; // true = tank; false = arcade
-    public boolean absolute = true; //functions can use this as a parameter to the Turn command
-    public boolean relative = false; //functions can use this as a parameter to the Turn command
+    public static int kAbsolute = 0; //functions can use this as a parameter to the Turn command
+    public static int kRelative = 1; //functions can use this as a parameter to the Turn command
+    public static int kCamera = 2; //functions can use this as a parameter to the Turn command
     public boolean m_lateInitHasRun = false; //Flag to cause the lateInit function to be run only once (called from both teleop and autonomous init routines)
 
     //--------------------------------
@@ -487,7 +534,8 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     
     //Limelight connections
     NetworkTable table;
-    NetworkTableEntry tx;
+    NetworkTableEntry tv;
+    NetworkTableEntry tx, tx0, tx1, tx2;
     NetworkTableEntry ty;
     NetworkTableEntry ta;
 
@@ -498,33 +546,33 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     /* and D constants and test the mechanism.                         */
     
     public static final double kEncoderTicksPerInch = (4096 / (3.1415 * 6)); // 4096 encoder ticks per revolution; wheel diameter is nominally 6"
-    static final double kToleranceDegrees = 0.25; // Stop if we are within this many degrees of the setpoint.
+    static final double kToleranceDegrees = 0.5; // Stop if we are within this many degrees of the setpoint.
     public static final double kToleranceDistUnits = (int) 1/*inches*/ * kEncoderTicksPerInch; // stop if we are within this many encoder units of our setpoint.  18.85 inches/rev and 4096 ticks/rev means .25" is ~50 encoder ticks
 
-    static final double kLargeTurnP = 0.0165;
+    static final double kLargeTurnP = 0.01;
     static final double kLargeTurnI = 0.00; //0.001504;
     static final double kLargeTurnD = 0.00;
     static final double kLargeTurnF = 0.00;
     public static final double kLargeTurnPIDOutputMax = 0.55; // Max motor output in large PID mode 0.55
 
     public static final double kMedTurnPIDLimit = 15.0; // Errors smaller than this number of degrees should use the medium PID profile
-    static final double kMedTurnP = 0.2; //use a very large (relative to normal) P to guarantee max motor output .25
+    static final double kMedTurnP = 0.175; //use a very large (relative to normal) P to guarantee max motor output
     static final double kMedTurnI = 0.00;
-    static final double kMedTurnD = 0.05;
+    static final double kMedTurnD = 0.5;
     static final double kMedTurnF = 0.00;
-    public static final double kMedTurnPIDOutputMax = 0.225; // Max motor output in medium PID mode
+    public static final double kMedTurnPIDOutputMax = 0.1875; // Max motor output in medium PID mode
 
-    public static final double kSmallTurnPIDLimit = 1.5; // Errors smaller than this number of degrees should use the small PID profile
-    static final double kSmallTurnP = 0.5; //use a very large (relative to normal) P to guarantee max motor output
-    static final double kSmallTurnI = 0.00;
+    public static final double kSmallTurnPIDLimit = 1; // Errors smaller than this number of degrees should use the small PID profile
+    static final double kSmallTurnP = 0.4; //use a very large (relative to normal) P to guarantee max motor output
+    static final double kSmallTurnI = 0.1;
     static final double kSmallTurnD = 0.05;
     static final double kSmallTurnF = 0.00;
-    public static final double kSmallTurnPIDOutputMax = 0.1475; // Max motor output in small PID mode
+    public static final double kSmallTurnPIDOutputMax = 0.1575; // Max motor output in small PID mode
 
     /* Hardware PID values for the Talon */
     static final double kDistP = 0.15;
     static final double kDistI = 0.0;//0.005 on 2017 robot
     static final double kDistD = 0.0;
-    static final double kDistF = 0.0; // Use 0.3789 for MotionMagic
+    static final double kDistF = 0.3789; // Use for MotionMagic.  You must set this to ZERO if using Position mode!!!!!
 }
 
