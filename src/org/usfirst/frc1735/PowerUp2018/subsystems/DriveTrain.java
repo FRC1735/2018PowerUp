@@ -81,19 +81,28 @@ public class DriveTrain extends Subsystem implements PIDOutput {
         //Print the acceleration vector(s)
         SmartDashboard.putNumber(   "Y Accel",           Robot.ahrs.getWorldLinearAccelY());    
         
-        //Grab the Limelight data stream
+        getDistanceToCube();
+
+    }
+
+	/**
+	 * Calculate 
+	 */
+	public double getDistanceToCube() {
+		//Grab the Limelight data stream
         double x = tx.getDouble(0);
         SmartDashboard.putNumber("Cube Angle", x);
         double y = ty.getDouble(0);
         double area = ta.getDouble(0);
-        double cameraAngle = 56.0;
+        double cameraAngle = 56.25; // practice bot was 56
         double targetHeight = 5.5;
-        double cameraHeight = 44.5;
+        double cameraHeight = 41.25;
+        double cameraToFrame = 6.25;
         double d;
-        d = ((Math.tan(Math.toRadians(cameraAngle + y))) * (cameraHeight - targetHeight));
+        d = ((Math.tan(Math.toRadians(cameraAngle + y))) * (cameraHeight - targetHeight)) - cameraToFrame;
         SmartDashboard.putNumber("Cube Distance", d);
-
-    }
+        return d;
+	}
 
     public void drivetrainInit() {
     	// Do initialization that cannot be done in the constructor because robot.init isn't executed yet so we don't have a gyro instance.
@@ -187,18 +196,18 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     	rightMotor.selectProfileSlot(0,0);
 
     	// set acceleration and vcruise velocity - see documentation
-    	leftMotor.configMotionCruiseVelocity(2700, 0); // 2700 encoder units per 100ms interval is about 395 RPM
-    	rightMotor.configMotionCruiseVelocity(2700, 0);
+    	leftMotor.configMotionCruiseVelocity(5400, 0); // 2700 encoder units per 100ms interval is about 395 RPM
+    	rightMotor.configMotionCruiseVelocity(5400, 0);
 
     	// It's not clear how the MotionAcceleration and the ClosedloopRamp differ...
-    	leftMotor.configMotionAcceleration(8100, 0); //want to get to full speed in 1/3 sec, so triple the velocity
-    	rightMotor.configMotionAcceleration(8100, 0); 
+    	leftMotor.configMotionAcceleration(5400, 0); //want to get to full speed in 1/3 sec, so triple the velocity
+    	rightMotor.configMotionAcceleration(67500, 0); 
 
     	// Set the closed loop ramp as well (time in seconds to full speed; timeout)
-    	leftMotor.configClosedloopRamp(0.333, 0); //want to get to full speed in 1/3 sec
-    	leftMotor.configOpenloopRamp(0.333, 0);
-    	rightMotor.configClosedloopRamp(0.333, 0);
-    	rightMotor.configOpenloopRamp(0.333, 0);
+    	leftMotor.configClosedloopRamp(0.5, 0); //want to get to full speed in 1/3 sec
+    	leftMotor.configOpenloopRamp(0.5, 0);
+    	rightMotor.configClosedloopRamp(0.5, 0);
+    	rightMotor.configOpenloopRamp(0.5, 0);
 
 
     	//Set the closed-loop allowable error.  Empirically on no-load, error was <50 units.
@@ -547,7 +556,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     
     public static final double kEncoderTicksPerInch = (4096 / (3.1415 * 6)); // 4096 encoder ticks per revolution; wheel diameter is nominally 6"
     static final double kToleranceDegrees = 0.5; // Stop if we are within this many degrees of the setpoint.
-    public static final double kToleranceDistUnits = (int) 1/*inches*/ * kEncoderTicksPerInch; // stop if we are within this many encoder units of our setpoint.  18.85 inches/rev and 4096 ticks/rev means .25" is ~50 encoder ticks
+    public static final double kToleranceDistUnits = (int) 0.5/*inches*/ * kEncoderTicksPerInch; // stop if we are within this many encoder units of our setpoint.  18.85 inches/rev and 4096 ticks/rev means .25" is ~50 encoder ticks
 
     static final double kLargeTurnP = 0.01;
     static final double kLargeTurnI = 0.00; //0.001504;
@@ -570,7 +579,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     public static final double kSmallTurnPIDOutputMax = 0.1575; // Max motor output in small PID mode
 
     /* Hardware PID values for the Talon */
-    static final double kDistP = 0.15;
+    static final double kDistP = 0.075; //Practice bot had .15 but was also overshooting.  
     static final double kDistI = 0.0;//0.005 on 2017 robot
     static final double kDistD = 0.0;
     static final double kDistF = 0.3789; // Use for MotionMagic.  You must set this to ZERO if using Position mode!!!!!

@@ -56,6 +56,22 @@ public class DriveWithPID extends Command {
         // Init dynamic variable
         m_distHistory = new ArrayList<>();
    }
+    
+    // Use this if driving to a cube using the camera
+    public DriveWithPID(boolean isWithCamera) {
+    	if (isWithCamera) {
+    		m_getDistFromCamera = true;
+    	}
+    	else {
+    		// Ummm... punt and pretend this was a null constructor and get data from the SmartDashboard...?\
+        	m_getDistFromSmartDashboard = true;
+    	}
+        requires(Robot.driveTrain);
+        // Init dynamic variable
+        m_distHistory = new ArrayList<>();
+    	
+    }
+    
 
     // Called just before this Command runs the first time
     @Override
@@ -92,9 +108,15 @@ public class DriveWithPID extends Command {
     		m_distance = (int) SmartDashboard.getNumber("Cruise Dist", 18.849); // default:  one revolution of a 6" wheel is just short of 19"
     		System.out.println("Initializing drive distance from SmartDashboard");
     	}
+    	
+    	// We also can get distance from the camera
+    	if (m_getDistFromCamera) {
+    		m_distance = (int) Robot.driveTrain.getDistanceToCube();
+    		System.out.println("Initializing drive distance from Camera");
+    	}
 
     	//Set a timeout value in seconds
-    	setTimeout(5);
+    	setTimeout(4);
     	
     	// initialize a loop iteration counter (used in isFinished(); see below)
     	m_loopCount = 0;
@@ -121,7 +143,7 @@ public class DriveWithPID extends Command {
     @Override
     protected boolean isFinished() {
     	//  update our rolling average distance traveled.  We need to compare this AVERAGE when deciding when to terminate.
-    	double avgDist = calcAvgDist(RobotMap.driveTrainLeftMotor.getSelectedSensorPosition(0));
+    	double avgDist = calcAvgDist(RobotMap.driveTrainRightMotor.getSelectedSensorPosition(0));
 
     	System.out.println(" FLerr: " + RobotMap.driveTrainLeftMotor.getClosedLoopError(0) +
     			" out_pct: " + RobotMap.driveTrainLeftMotor.getMotorOutputPercent() +
@@ -168,7 +190,7 @@ public class DriveWithPID extends Command {
     // Given a new distance, calculate a new rolling average.
     protected double calcAvgDist(int latestDist) {
     	// Remove the oldest item in the distHistory (if too many exist)
-    	while (m_distHistory.size() > 1000) // Rolling average of five items 0..4
+    	while (m_distHistory.size() > 150) // Rolling average of five items 0..4
     		m_distHistory.remove(0);
     	
     	// Add the latest distance to the list
@@ -188,6 +210,7 @@ public class DriveWithPID extends Command {
     int m_magDir;
     int m_accel;
     boolean m_getDistFromSmartDashboard = false;
+    boolean m_getDistFromCamera = false;
     double m_loopCount;
     double m_encDistance; // This is the requested distance in encoder ticks, as opposed to m_distance which is in inches.
     private List<Integer> m_distHistory;  // Holds a history of previous sensor distance values
