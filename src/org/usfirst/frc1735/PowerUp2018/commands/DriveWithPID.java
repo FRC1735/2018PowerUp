@@ -97,8 +97,8 @@ public class DriveWithPID extends Command {
     	RobotMap.driveTrainLeftMotor.configMotionCruiseVelocity(m_magDir, 0);  // speed in encoder units per 100ms
     	RobotMap.driveTrainRightMotor.configMotionCruiseVelocity(m_magDir, 0);
     	
-    	m_accel = (int) SmartDashboard.getNumber("Cruise Accel", 8100); //full speed in 1/3 sec
-    	int r_accel = (int) SmartDashboard.getNumber("Cruise R Accel", 10000); //full speed in 1/3 sec
+    	m_accel = (int) SmartDashboard.getNumber("Cruise Accel", 5400); //full speed in 1/2 sec (was 8100 = 1/3)
+    	int r_accel = (int) SmartDashboard.getNumber("Cruise R Accel", 5400); //was 10000
     	RobotMap.driveTrainLeftMotor.configMotionAcceleration(m_accel, 0); //want xPM in 1 sec, so x/60/10*4096 = 3072 units/100ms
     	RobotMap.driveTrainRightMotor.configMotionAcceleration(r_accel, 0);
     	

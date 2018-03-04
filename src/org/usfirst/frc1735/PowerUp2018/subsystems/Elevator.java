@@ -116,6 +116,9 @@ public class Elevator extends Subsystem {
 		if (DriverStation.getInstance().getJoystickIsXbox(joy.getPort())) {// if Xbox controller
 			joyY = joy.getRawAxis(5);  // right-hand joystick Y
 		}
+//		else if(DriverStation.getInstance().getJoystickType(joy.getPort()) == 20) { // 20 is a Logitech Dual Action.  Similar to the Xbox in behavior.
+//			joyY = joy.getRawAxis(3);  // right-hand joystick Y
+//		}
 		else {
 			joyY  = joy.getY();
 		}

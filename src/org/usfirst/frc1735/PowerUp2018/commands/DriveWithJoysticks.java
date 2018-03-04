@@ -38,6 +38,8 @@ public class DriveWithJoysticks extends Command {
     // Called just before this Command runs the first time
     @Override
     protected void initialize() {
+    	//Set the driveline's Talons into MotionMagic mode
+    	Robot.driveTrain.setOpenLoopMode(); // This also turns off the motors as part of the mode switch.
     }
 
     // Called repeatedly when this Command is scheduled to run

@@ -196,12 +196,12 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     	rightMotor.selectProfileSlot(0,0);
 
     	// set acceleration and vcruise velocity - see documentation
-    	leftMotor.configMotionCruiseVelocity(5400, 0); // 2700 encoder units per 100ms interval is about 395 RPM
-    	rightMotor.configMotionCruiseVelocity(5400, 0);
+    	leftMotor.configMotionCruiseVelocity(2700, 0); // 2700 encoder units per 100ms interval is about 395 RPM
+    	rightMotor.configMotionCruiseVelocity(2700, 0);
 
     	// It's not clear how the MotionAcceleration and the ClosedloopRamp differ...
     	leftMotor.configMotionAcceleration(5400, 0); //want to get to full speed in 1/3 sec, so triple the velocity
-    	rightMotor.configMotionAcceleration(67500, 0); 
+    	rightMotor.configMotionAcceleration(5400, 0); 
 
     	// Set the closed loop ramp as well (time in seconds to full speed; timeout)
     	leftMotor.configClosedloopRamp(0.5, 0); //want to get to full speed in 1/3 sec
@@ -225,12 +225,13 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     	// Throw a lot of settings up on the SmartDashboard...
     	SmartDashboard.putNumber("Cruise SpeedDir", 2700); // speed in units per 100ms (2745 is full speed)
     	SmartDashboard.putNumber("Cruise Dist", 72); // inches (DriveWithPID will convert to encoder ticks)
-    	SmartDashboard.putNumber("Cruise Accel", 8100); //1/3 sec to get to full speed
-    	SmartDashboard.putNumber("Cruise R Accel", 10000);     	//Temporary to allow setting left vs right accel separately
+    	SmartDashboard.putNumber("Cruise Accel", 5400); //8100 = 1/3 sec to get to full 2700 speed
+    	SmartDashboard.putNumber("Cruise R Accel", 5400);     	//10000 = Temporary to allow setting left vs right accel separately
     	SmartDashboard.putNumber("P", kDistP);
     	SmartDashboard.putNumber("I", kDistI);
     	SmartDashboard.putNumber("D", kDistD);
     	SmartDashboard.putNumber("F", kDistF);
+    	
     	}
     
     // We need to initialize followers based on whether we are selecting the practice bot or the competition bot.
@@ -252,6 +253,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     		// We have different follower models between Practice and Competition robots, so choose carefully:
     		if (SmartDashboard.getBoolean("PracticeBot", false)) {
     			// Practice
+    			//System.out.println("We are a PracticeBot");
     			leftFollower.follow(leftMotor);
     			rightFollower.follow(rightMotor);
     			leftFollower.setSafetyEnabled(false);
@@ -259,6 +261,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     		}
     		else {
     			// Competition
+    			//System.out.println("We are a CompetitionBot");
     			leftFollowerVictor.follow(leftMotor);
     			rightFollowerVictor.follow(rightMotor);        	
     			leftFollowerVictor.setSafetyEnabled(false);
@@ -268,6 +271,10 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     		// Default to be in "drive by joystick" mode
     		// if we are going into Autonomous, the first Command will properly set the operating mode so we're still ok
     		setOpenLoopMode();
+    		
+    		//System.out.println("Joystick in port0 is of type " + DriverStation.getInstance().getJoystickType(0) + " with name= " + DriverStation.getInstance().getJoystickName(0));
+
+
     	} // if !m_lateInitHasRun
     }
     
@@ -389,6 +396,13 @@ public class DriveTrain extends Subsystem implements PIDOutput {
 			joyRightX = joyLeft.getRawAxis(4); // Right stick X
 			joyRightY = joyLeft.getRawAxis(5); // Right stick Y
 		}
+//		else if(DriverStation.getInstance().getJoystickType(joyLeft.getPort()) == 20) { // 20 is a Logitech Dual Action.  Similar to the Xbox in behavior.
+//			joyLeftX = joyLeft.getRawAxis(0);  // Left stick X
+//			joyLeftY = joyLeft.getRawAxis(1);  // Left stick Y
+//			joyRightX = joyLeft.getRawAxis(2); // Right stick X
+//			joyRightY = joyLeft.getRawAxis(3); // Right stick Y
+//			
+//		}
 		else {
 			joyLeftX  = joyLeft.getX();
 			joyLeftY  = joyLeft.getY();
@@ -534,6 +548,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     public static int kRelative = 1; //functions can use this as a parameter to the Turn command
     public static int kCamera = 2; //functions can use this as a parameter to the Turn command
     public boolean m_lateInitHasRun = false; //Flag to cause the lateInit function to be run only once (called from both teleop and autonomous init routines)
+    public static boolean kUseCamera = true; // used in DriveWithPID to override distance:  Instead, distance is calculated via the camera.
 
     //--------------------------------
     // SW PID subsystem variables
