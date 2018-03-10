@@ -92,6 +92,8 @@ public class Turn extends Command {
     	Robot.driveTrain.drivelineController.setSetpoint(m_targetAbsAngle);	
     	Robot.driveTrain.drivelineController.enable();
     	System.out.println("Mode = " + m_mode + " ReqAngle= " + m_angle + " absTarget= " + m_targetAbsAngle);
+    	// Reset the iteration counter (for reduced printing)
+    	m_exeCount = 0;
     }
 
     // Called repeatedly when this Command is scheduled to run
@@ -112,6 +114,9 @@ public class Turn extends Command {
         	
         	// update the setpoint 
         	Robot.driveTrain.drivelineController.setSetpoint(m_targetAbsAngle);
+        	
+        	// increment a counter
+        	m_exeCount++;
     	}
 
     	
@@ -177,7 +182,8 @@ public class Turn extends Command {
 	 */
 	public double filter1(double tx, double angleLimit) {
 		double camAngle;
-		System.out.print("Tx: " + tx);
+		boolean do_print = (m_exeCount % 25) == 0;
+		System.out.print("iter: " + m_exeCount + " Tx: " + tx);
 		if ((tx >=0) && (tx < angleLimit)) {
 			System.out.print(" (Chose Tx)");
 			camAngle      = tx;
@@ -189,32 +195,31 @@ public class Turn extends Command {
 			double tx0 = Robot.driveTrain.getTx0();
 			double tx1 = Robot.driveTrain.getTx1();
 			double tx2 = Robot.driveTrain.getTx2();
-			System.out.print(" Tx0 " + tx0 + " Tx1 " + tx1 + " Tx2 " + tx2);
+			if (do_print) System.out.print(" Tx0 " + tx0 + " Tx1 " + tx1 + " Tx2 " + tx2);
 			if ((tx0 >=0) && (tx0 < angleLimit)) {
-				System.out.print(" (Chose Tx0)");
+				if (do_print) System.out.print(" (Chose Tx0)");
 				camAngle      = tx0;
 			}
 			else if ((tx1 >=0) && (tx1 < angleLimit)) {
-				System.out.print(" (Chose Tx1)");
+				if (do_print) System.out.print(" (Chose Tx1)");
 				camAngle      = tx1;
 			}
 			else if ((tx2 >=0) && (tx2 < angleLimit)) {
-				System.out.print(" (Chose Tx2)");
+				if (do_print) System.out.print(" (Chose Tx2)");
 				camAngle      = tx2;
 			}
 			// If we haven't found ANYTHING at this point, just use the TX if it's valid
 			else if ((Robot.driveTrain.getTv() == 1) && (tx >=0)) {
-				System.out.print(" (Chose fallthrough Tx)");
-				camAngle      = tx; // Handles case where we see a target, but it is not x < 12
-				//@FIXME:  we still ignore anything to our left; might need to include that as a condition at some point.
+				if (do_print) System.out.print(" (Chose fallthrough Tx)");
+				camAngle      = tx; 
 			}
 			else {
 				// If nothing else, try rotating 5 degrees to the right to see if something comes into view
-				System.out.print(" (Chose to Seek)");
+				if (do_print) System.out.print(" (Chose to Seek)");
 				camAngle = 5; // "Seek mode"
 			}
 		}
-		System.out.println(); //newline
+		if (do_print) System.out.println(); //newline
 		return camAngle;
 	}
 
@@ -229,81 +234,82 @@ public class Turn extends Command {
 	public double calcCubeAngle() {
 		double angleLimit = 15;
 		double camAngle;
+		boolean do_print = (m_exeCount % 25) == 0;
 		// Ignore the "selected" tx target entirely.
 		// We need to grab the individual tx0, tx1, tx2 and look at those.
 		// The limelight might have locked onto the cube that's to the right of our target cube, so we need to look
 		// at all the raw values
     	double tx  = Robot.driveTrain.getTx();
-		double tx0 = Robot.driveTrain.getTx0();
-		double tx1 = Robot.driveTrain.getTx1();
-		double tx2 = Robot.driveTrain.getTx2();
-		System.out.print("Tx " + tx + "Tx0 " + tx0 + " Tx1 " + tx1 + " Tx2 " + tx2);
+		double tx0 = Robot.driveTrain.getTx0() * 27; // Raw values are in screen-normalized coordinates.  Camera FOV is 54 degrees
+		double tx1 = Robot.driveTrain.getTx1() * 27;
+		double tx2 = Robot.driveTrain.getTx2() * 27;
+		if  (do_print) System.out.print("iter " + m_exeCount + " Tx " + tx + " Tx0 " + tx0 + " Tx1 " + tx1 + " Tx2 " + tx2);
 		// assuming field-right coding here; use SmartDashboard to invert directions if we are on the left side of the field.
 		boolean onRightSide =
 				(Robot.fieldPositionChooser.getSelected() == "Far Right") ||
         		(Robot.fieldPositionChooser.getSelected() == "Mid Right");
 		
 		if (Robot.driveTrain.getTv() == 1) {
-			if (Math.abs(tx) < 15) { // if our current lock is close to centered, use it
+			if (false /*Math.abs(tx) < 15*/) { // if our current lock is close to centered, use it
 				camAngle = tx;
 			}
 			else {
 				// If we have ANY target detected
 				if (onRightSide) {
 					// Check for TX0.
-					if ((tx0 < tx1) && (tx0 < tx2) &&  // Is it the farthest left (outermost)?
-							(tx0 > 0))                     // and is to our right (so not a field wall reflection)
+					if ((tx0 < tx1) && (tx0 < tx2)) //&&  // Is it the farthest left (outermost)?
+							//(tx0 > 0))                     // and is to our right (so not a field wall reflection)
 					{
-						System.out.print(" (Chose Tx0)");
+						if  (do_print) System.out.print(" (Chose Tx0)");
 						camAngle      = tx0;
 					}
 					// If not, check tx1
-					else if ((tx1 < tx0) && (tx1 < tx2) &&  // Is it the farthest left (outermost)?
-							(tx1 > 0))                     // and is to our right (so not a field wall reflection)
+					else if ((tx1 < tx0) && (tx1 < tx2)) //&&  // Is it the farthest left (outermost)?
+							//(tx1 > 0))                     // and is to our right (so not a field wall reflection)
 					{
-						System.out.print(" (Chose Tx1)");
+						if  (do_print) System.out.print(" (Chose Tx1)");
 						camAngle      = tx1;
 					}
 					// If not, check tx2
-					else if ((tx2 < tx0) && (tx2 < tx1) &&  // Is it the farthest left (outermost)?
-							(tx2 > 0))                     // and is to our right (so not a field wall reflection)
+					else if ((tx2 < tx0) && (tx2 < tx1)) //&&  // Is it the farthest left (outermost)?
+							//(tx2 > 0))                     // and is to our right (so not a field wall reflection)
 					{
-						System.out.print(" (Chose Tx2)");
+						if  (do_print) System.out.print(" (Chose Tx2)");
 						camAngle      = tx2;
 					}
 					else
 					{
 						// Apparently, none of them are to our right.  Punt, and just use whatever we DID detect.
-						System.out.print(" (Chose fallthrough Tx)");
+						if  (do_print) System.out.print(" (Chose fallthrough Tx)");
 						camAngle      = tx;
 					}
 				}
 				else { // Must be on left side.  Same code, but all comparisons are inverted
 					// Check for TX0.
-					if ((tx0 > tx1) && (tx0 > tx2) &&  // Is it the farthest right (outermost)?
-							(tx0 < 0))                     // and is to our left (so not a field wall reflection)
+					if ((tx0 > tx1) && (tx0 > tx2)) //&&  // Is it the farthest right (outermost)?
+							//(tx0 < 0))                     // and is to our left (so not a field wall reflection)
 					{
-						System.out.print(" (Chose Tx0)");
+						if  (do_print) System.out.print(" (Chose Tx0)");
 						camAngle      = tx0;
 					}
 					// If not, check tx1
-					else if ((tx1 > tx0) && (tx1 > tx2) &&  // Is it the farthest right (outermost)?
-							(tx1 < 0))                     // and is to our left (so not a field wall reflection)
+					else if ((tx1 > tx0) && (tx1 > tx2)) //&&  // Is it the farthest right (outermost)?
+							//(tx1 < 0))                     // and is to our left (so not a field wall reflection)
 					{
-						System.out.print(" (Chose Tx1)");
+						if  (do_print) System.out.print(" (Chose Tx1)");
 						camAngle      = tx1;
 					}
 					// If not, check tx2
-					else if ((tx2 > tx0) && (tx2 > tx1) &&  // Is it the farthest right (outermost)?
-							(tx2 < 0))                     // and is to our left (so not a field wall reflection)
+					else if ((tx2 > tx0) && (tx2 > tx1)) //&&  // Is it the farthest right (outermost)?
+							//(tx2 < 0))                     // and is to our left (so not a field wall reflection)
 					{
-						System.out.print(" (Chose Tx2)");
+						if  (do_print) System.out.print(" (Chose Tx2)");
 						camAngle      = tx2;
 					}
 					else
 					{
 						// Apparently, none of them are to our right.  Punt, and just use whatever we DID detect.
-						System.out.print(" (Chose fallthrough Tx)");
+						if  (do_print) System.out.print(" (Chose fallthrough Tx)");
 						camAngle      = tx;
 					}
 
@@ -314,14 +320,14 @@ public class Turn extends Command {
 			// Here, the camera didn't find ANY targets.
 			// Time for an even bigger punt...
 			// try rotating 5 degrees inwards to the center of the field to see if something comes into view
-			System.out.print(" (Chose to Seek)");
+			if  (do_print) System.out.print(" (Chose to Seek)");
 			if (onRightSide)
 				camAngle = 5; // "Seek mode"
 			else
 				camAngle = -5; // "Seek mode"
 		}
 
-		System.out.println(); //newline
+		if  (do_print) System.out.println(); //newline
 		return camAngle;
 	}
 
@@ -330,4 +336,5 @@ public class Turn extends Command {
     double m_targetAbsAngle; //the field relative angle that we want to end up at
     boolean m_getDataFromSmartDashboard = false;
     double m_onTargetCount = 0; // counter for determining whether we have settled on our target.
+    int m_exeCount = 0; // Counter for number of times we have been called (i.e. every 20 ms it increments)
 }

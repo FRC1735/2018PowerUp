@@ -65,5 +65,12 @@ public class Clamps extends Subsystem {
     	//System.out.println("Closing Clamps!");
     	doubleSolenoid.set(Value.kReverse);
     }
+    
+    public boolean isClosed() {
+    	return (doubleSolenoid.get() == Value.kReverse);
+    }
+    public boolean isOpen() {
+    	return (doubleSolenoid.get() == Value.kForward);
+    }
 }
 

@@ -38,6 +38,7 @@ public class HookExtend extends Command {
     // Called just before this Command runs the first time
     @Override
     protected void initialize() {
+    	System.out.println("Hook Extend!");
     	Robot.hook.extend();
     }
 

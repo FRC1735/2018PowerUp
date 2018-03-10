@@ -1,5 +1,5 @@
 {
-  "dividerPosition": 0.22673594709494568,
+  "dividerPosition": 0.1986444212721585,
   "tabPane": [
     {
       "title": "SmartDashboard",
@@ -88,17 +88,6 @@
               "_title": "SquaredInputs"
             }
           },
-          "14,0": {
-            "size": [
-              12,
-              11
-            ],
-            "content": {
-              "_type": "Camera Stream",
-              "_source0": "camera_server://limelight",
-              "_title": "limelight"
-            }
-          },
           "5,7": {
             "size": [
               4,
@@ -108,6 +97,17 @@
               "_type": "Text View",
               "_source0": "network_table:///limelight/camMode",
               "_title": "/limelight/camMode"
+            }
+          },
+          "2,7": {
+            "size": [
+              2,
+              2
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///limelight/ledMode",
+              "_title": "/limelight/ledMode"
             }
           }
         }
@@ -301,7 +301,7 @@
           },
           "27,0": {
             "size": [
-              6,
+              4,
               11
             ],
             "content": {
@@ -696,7 +696,7 @@
           "12,0": {
             "size": [
               2,
-              2
+              3
             ],
             "content": {
               "_type": "Text View",
@@ -842,6 +842,28 @@
               "_type": "Text View",
               "_source0": "network_table:///limelight/ledMode",
               "_title": "/limelight/ledMode"
+            }
+          },
+          "11,3": {
+            "size": [
+              3,
+              2
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/MotorOut",
+              "_title": "SmartDashboard/MotorOut"
+            }
+          },
+          "24,0": {
+            "size": [
+              3,
+              2
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/Cube Angle",
+              "_title": "SmartDashboard/Cube Angle"
             }
           }
         }

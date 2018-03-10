@@ -12,6 +12,8 @@
 package org.usfirst.frc1735.PowerUp2018.commands;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
+
+import org.usfirst.frc1735.PowerUp2018.Robot;
 import org.usfirst.frc1735.PowerUp2018.subsystems.*;
 
 /**
@@ -53,15 +55,18 @@ public class AutoScale2x extends CommandGroup {
     	addSequential(new ConditionalTurn(0, DriveTrain.kAbsolute));
     	// deploy the claw before moving the elevator
     	// For now, without limit switches, do it for a set time period.  Eventually limit switches will stop the motor in the "right" position.
-    	addSequential(new MoveClamps(1), 0.5); // direction, timeout
+    	addSequential(new ClampsDeploy(), 0.5); // direction, timeout
     	// Raise the elevator to delivery position
-    	addSequential(new ElevatorwithPID(60)); // in inches
+    	addSequential(new ElevatorwithPID(Robot.elevator.kScalePosition)); // in inches
     	//Final approach to the scale
     	addSequential(new DriveWithPID(5));
     	// Drop the cube
     	addSequential(new OpenClamps());
     	// Back up a bit and turn around
     	addSequential(new DriveWithPID(-5));
+    	// Return elevator to loading position
+    	addSequential(new ElevatorwithPID(Robot.elevator.kLoadPosition)); // in inches   	
+    	// Turn until we are roughly facing our cubes
     	addSequential(new ConditionalTurn(175, DriveTrain.kAbsolute));
     	// Center on the cube that we (hopefully) see
     	addSequential(new ConditionalTurn(0, DriveTrain.kCamera)); // angle is not used; it is grabbed from the camera
@@ -77,11 +82,9 @@ public class AutoScale2x extends CommandGroup {
     	addSequential(new DriveWithPID(100));
     	// angle to line up with Switch
     	addSequential(new ConditionalTurn(0, DriveTrain.kAbsolute));
-    	// deploy the claw before moving the elevator
-    	// For now, without limit switches, do it for a set time period.  Eventually limit switches will stop the motor in the "right" position.
-    	addSequential(new MoveClamps(1), 0.5); // direction, timeout
+    	// We already deployed the claw, so no need to do it again
     	// Raise the elevator to delivery position
-    	addSequential(new ElevatorwithPID(60)); // in inches
+    	addSequential(new ElevatorwithPID(Robot.elevator.kScalePosition)); // in inches
     	//Final approach to the scale
     	addSequential(new DriveWithPID(5));
     	// Drop the cube

@@ -47,7 +47,8 @@ public class MoveClamps extends Command {
     @Override
     protected void execute() {
     	//System.out.println("Moving clamps with MagDir= " + m_magDir);
-    	Robot.clampsDeployer.move(m_magDir);
+    	//Robot.clampsDeployer.move(m_magDir);
+    	System.out.println("DO NOT USE THIS FUNCTION!  USe ClampsDeploy or ClampsRetract instead!!");
     }
 
     // Make this return true when this Command no longer needs to run execute()

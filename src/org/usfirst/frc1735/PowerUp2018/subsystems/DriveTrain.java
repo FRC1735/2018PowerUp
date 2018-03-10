@@ -90,7 +90,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
 	 */
 	public double getDistanceToCube() {
 		//Grab the Limelight data stream
-        double x = tx.getDouble(0);
+        double x = tx.getDouble(0); // This is the limelight-chosen target, but we have our own filter on the raw data
         SmartDashboard.putNumber("Cube Angle", x);
         double y = ty.getDouble(0);
         double area = ta.getDouble(0);
@@ -396,13 +396,13 @@ public class DriveTrain extends Subsystem implements PIDOutput {
 			joyRightX = joyLeft.getRawAxis(4); // Right stick X
 			joyRightY = joyLeft.getRawAxis(5); // Right stick Y
 		}
-//		else if(DriverStation.getInstance().getJoystickType(joyLeft.getPort()) == 20) { // 20 is a Logitech Dual Action.  Similar to the Xbox in behavior.
-//			joyLeftX = joyLeft.getRawAxis(0);  // Left stick X
-//			joyLeftY = joyLeft.getRawAxis(1);  // Left stick Y
-//			joyRightX = joyLeft.getRawAxis(2); // Right stick X
-//			joyRightY = joyLeft.getRawAxis(3); // Right stick Y
-//			
-//		}
+		else if (DriverStation.getInstance().getJoystickName(joyLeft.getPort()).equals("Logitech Dual Action")) { //Similar to the Xbox in behavior, but with different raw buttons/axes
+			joyLeftX = joyLeft.getRawAxis(0);  // Left stick X
+			joyLeftY = joyLeft.getRawAxis(1);  // Left stick Y
+			joyRightX = joyLeft.getRawAxis(2); // Right stick X
+			joyRightY = joyLeft.getRawAxis(3); // Right stick Y
+
+		}
 		else {
 			joyLeftX  = joyLeft.getX();
 			joyLeftY  = joyLeft.getY();
@@ -573,7 +573,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     static final double kToleranceDegrees = 0.5; // Stop if we are within this many degrees of the setpoint.
     public static final double kToleranceDistUnits = (int) 0.5/*inches*/ * kEncoderTicksPerInch; // stop if we are within this many encoder units of our setpoint.  18.85 inches/rev and 4096 ticks/rev means .25" is ~50 encoder ticks
 
-    static final double kLargeTurnP = 0.01;
+    static final double kLargeTurnP = 0.015;
     static final double kLargeTurnI = 0.00; //0.001504;
     static final double kLargeTurnD = 0.00;
     static final double kLargeTurnF = 0.00;
@@ -589,7 +589,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     public static final double kSmallTurnPIDLimit = 1; // Errors smaller than this number of degrees should use the small PID profile
     static final double kSmallTurnP = 0.4; //use a very large (relative to normal) P to guarantee max motor output
     static final double kSmallTurnI = 0.1;
-    static final double kSmallTurnD = 0.05;
+    static final double kSmallTurnD = 0.5;
     static final double kSmallTurnF = 0.00;
     public static final double kSmallTurnPIDOutputMax = 0.1575; // Max motor output in small PID mode
 

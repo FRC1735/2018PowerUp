@@ -57,13 +57,15 @@ public class AutoSwitchAndScale extends CommandGroup {
     	// For now, without limit switches, do it for a set time period.  Eventually limit switches will stop the motor in the "right" position.
     	///addSequential(new MoveClamps(1), 0.5); // direction, timeout
     	// Raise the elevator to delivery position
-    	///addSequential(new ElevatorwithPID(60)); // in inches
+    	///addSequential(new ElevatorwithPID(Robot.elevator.kScalePosition)); // in inches
     	//Final approach to the scale
     	///addSequential(new DriveWithPID(5));
     	// Drop the cube
     	///addSequential(new OpenClamps());
     	// Back up a bit and turn around
     	///addSequential(new DriveWithPID(-5));
+    	// Return the elevator to loading position
+    	// addSequential(new ElevatorwithPID(Robot.elevator.kLoadPosition)); // in inches
     	///addSequential(new ConditionalTurn(175, DriveTrain.kAbsolute));
     	// Center on the cube that we (hopefully) see
     	///addSequential(new ConditionalTurn(0, DriveTrain.kCamera)); // angle is not used; it is grabbed from the camera
@@ -72,7 +74,7 @@ public class AutoSwitchAndScale extends CommandGroup {
     	// Grab the cube
     	///addSequential(new CloseClamps());
     	// Raise the elevator to switch delivery position
-    	///addSequential(new ElevatorwithPID(20)); //Something more than 18.75 inches... TBD
+    	///addSequential(new ElevatorwithPID(Robot.elevator.kSwitchPosition)); //Something more than 18.75 inches... TBD
     	// Drive forward until the bumpers touch.  Bumpers are about 6" deep, so cube-bumper is about 6"
     	///addSequential(new DriveWithPID(6));
     	// Drop the cube

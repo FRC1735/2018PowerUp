@@ -50,18 +50,18 @@ public class AutoSwitch2x extends CommandGroup {
     	addSequential(new DriveWithPID(154)); //drive forward (in inches) until we are even with the end of the switch
     	// Turn to face the switch
     	addSequential(new ConditionalTurn(-90, DriveTrain.kAbsolute));
-    	// Drive  up to the switch fence
-    	addSequential(new DriveWithPID(1));
-    	//Deploy the clamp
-    	addSequential(new MoveClamps(1), 0.5); // direction, timeout
+     	//Deploy the clamp
+    	addSequential(new ClampsDeploy(), 0.5); // direction, timeout
     	// Raise the elevator to delivery position
     	addSequential(new ElevatorwithPID(20)); // in inches
     	//Final approach to the scale
-    	addSequential(new DriveWithPID(5));
+    	addSequential(new DriveWithPID(17));
     	// Drop the cube
     	addSequential(new OpenClamps());
     	// Back up a bit and turn around
     	addSequential(new DriveWithPID(-5));
+    	// Return elevator to loading position for stable driving
+    	addSequential(new ElevatorwithPID(0)); // in inches
     	//Turn back downfield
     	addSequential(new ConditionalTurn(0, DriveTrain.kAbsolute));
     	// Drive past the cube

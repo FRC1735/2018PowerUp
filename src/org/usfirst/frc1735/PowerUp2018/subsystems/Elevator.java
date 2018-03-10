@@ -116,9 +116,9 @@ public class Elevator extends Subsystem {
 		if (DriverStation.getInstance().getJoystickIsXbox(joy.getPort())) {// if Xbox controller
 			joyY = joy.getRawAxis(5);  // right-hand joystick Y
 		}
-//		else if(DriverStation.getInstance().getJoystickType(joy.getPort()) == 20) { // 20 is a Logitech Dual Action.  Similar to the Xbox in behavior.
-//			joyY = joy.getRawAxis(3);  // right-hand joystick Y
-//		}
+		else if (DriverStation.getInstance().getJoystickName(joy.getPort()).equals("Logitech Dual Action")) { //Similar to the Xbox in behavior, but with different raw buttons/axes
+			joyY = joy.getRawAxis(3);  // right-hand joystick Y
+		}
 		else {
 			joyY  = joy.getY();
 		}
@@ -157,4 +157,10 @@ public class Elevator extends Subsystem {
     static final double kF = 0.0;
     public static final double kPIDOutputMax = 1.0; // Max motor output in PID mode
     public static final double kEncoderTicksPerInch = 1023/84; // total encoder range (<1023) across the total elevator travel (<84")
+    public static final double kLoadPosition = 0;
+    public static final double kSwitchPosition = 24;
+    public static final double kScalePosition = 66;
+    public static final double kClimbPosition = 84;
+    public static final double EncoderOffset = 123; // When the elevator is at its lowest position, this is the value of the encoder.
+    
 }
