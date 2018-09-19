@@ -144,8 +144,13 @@ public class Elevator extends Subsystem {
     	// Drive the elevator motor with the joystick value
     	if (!SmartDashboard.getBoolean("PracticeBot", false)) {
     		// Only the competition bot has an elevator
-    		elevatorMotor.set(ControlMode.PercentOutput, -joyY); //Positive motor values should move the elevator up.  Joystick "up" is a negative number, so invert
+    		elevatorMotor.set(ControlMode.PercentOutput, joyY); //Positive motor values should move the elevator updown.  Joystick "up" is a negative number, so no inversion needed
     	}
+    }
+    
+    // Simply move the elevator in open loop mode as an alternative to PID control
+    public void moveOpenLoop(double magDir) {
+    	elevatorMotor.set(ControlMode.PercentOutput, magDir);
     }
 
     // Member Variables
@@ -162,5 +167,9 @@ public class Elevator extends Subsystem {
     public static final double kScalePosition = 66;
     public static final double kClimbPosition = 84;
     public static final double EncoderOffset = 123; // When the elevator is at its lowest position, this is the value of the encoder.
-    
+    // For dead reckoning control of elevator in open loop mode.  value is in seconds.
+    public static final double kTimeLoadToSwitch = 3;
+    public static final double kTimeLoadToScale = 0.3;
+    public static final double kTimeSwitchToLoad = 3;
+    public static final double kTimeScaleToLoad = 0.3;
 }

@@ -10,6 +10,7 @@
 
 
 package org.usfirst.frc1735.PowerUp2018.commands;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -55,7 +56,10 @@ public class ElevatorwithPID extends Command {
     // Called just before this Command runs the first time
     @Override
     protected void initialize() {
-    	double p = SmartDashboard.getNumber("ElevP", 0);
+    	// We currently do not have a sensor on the elevator, so PID is not feasible.  Print an error.
+		DriverStation.reportError("Attempt to call ElevatorWithPID.  Call will be ignored.", false);
+
+		double p = SmartDashboard.getNumber("ElevP", 0);
     	double i = SmartDashboard.getNumber("ElevI", 0);
     	double d = SmartDashboard.getNumber("ElevD", 0);
     	double f = SmartDashboard.getNumber("ElevF", 0.3789);
@@ -93,7 +97,9 @@ public class ElevatorwithPID extends Command {
     @Override
     protected void execute() {
     	// Just update the motor setpoints
-    	RobotMap.elevatorElevatorMotor.set(ControlMode.Position/*MotionMagic*/, m_encHeight);
+    	// Currently we have no sensor on the elevator, so PID mode is not feasible.
+    	//RobotMap.elevatorElevatorMotor.set(ControlMode.Position/*MotionMagic*/, m_encHeight);
+    	
     }
 
     // Make this return true when this Command no longer needs to run execute()

@@ -46,41 +46,43 @@ public class AutoSwitch2x extends CommandGroup {
     	// reset the gyro because we don't know how much it drifted between power-on and the start of the match.
     	// Assuming we are square with the Driverstation Wall, this should properly define the Zero Degree point...
     	addSequential(new ResetGyro());
-    	// Drive over to the switch
-    	addSequential(new DriveWithPID(154)); //drive forward (in inches) until we are even with the end of the switch
-    	// Turn to face the switch
-    	addSequential(new ConditionalTurn(-90, DriveTrain.kAbsolute));
+    	// In parallel, deploy the clamp AND start raising the elevator
+    	addParallel(new ClampsDeploy(), Clamps.kClampsDeployTimeout); // direction, timeout
+    	addParallel(new ElevatorMove(1), Elevator.kTimeLoadToSwitch);
+    	// Drive even with the end of the switch
+    	addSequential(new DriveWithPID(142), 3.5); //drive forward (in inches) until we are even with the end of the switch
      	//Deploy the clamp
-    	addSequential(new ClampsDeploy(), 0.5); // direction, timeout
+    	// to parallel: addSequential(new ClampsDeploy(), Clamps.kClampsDeployTimeout); // direction, timeout
     	// Raise the elevator to delivery position
-    	addSequential(new ElevatorwithPID(20)); // in inches
+    	// to parallel: addSequential(new ElevatorMove(1), Elevator.kTimeLoadToSwitch); //ElevatorwithPID(20)); // in inches
+    	// Turn to face the switch
+    	addSequential(new ConditionalTurn(-90, DriveTrain.kAbsolute),1.75);
     	//Final approach to the scale
-    	addSequential(new DriveWithPID(17));
+    	addSequential(new DriveWithPID(36), 2);
     	// Drop the cube
     	addSequential(new OpenClamps());
-    	// Back up a bit and turn around
-    	addSequential(new DriveWithPID(-5));
+    	// Back up a bit before we try to turn (so our clamps will not hit the switch fence)
+    	addSequential(new DriveWithPID(-30), 2);
+    	// In parallel with elevator, start turning towards the scale
+    	addParallel(new ConditionalTurn(-26, DriveTrain.kAbsolute),1.5);
     	// Return elevator to loading position for stable driving
-    	addSequential(new ElevatorwithPID(0)); // in inches
+    	addSequential(new ElevatorMove(-1), Elevator.kTimeSwitchToLoad); //ElevatorwithPID(0)); // in inches
     	//Turn back downfield
-    	addSequential(new ConditionalTurn(0, DriveTrain.kAbsolute));
+    	// to Parallel: addSequential(new ConditionalTurn(0, DriveTrain.kAbsolute),1.5);
     	// Drive past the cube
-    	addSequential(new DriveWithPID(60));
-    	// turn and drive even with the cube
-    	addSequential(new ConditionalTurn(-90, DriveTrain.kAbsolute));
-    	addSequential(new DriveWithPID(32));
+    	addSequential(new DriveWithPID(90), 1.5);
     	// Turn to face the cube
-    	addSequential(new ConditionalTurn(-175, DriveTrain.kAbsolute));
+    	addSequential(new ConditionalTurn(175, DriveTrain.kAbsolute),1.75);
     	// Center on the cube
-    	addSequential(new ConditionalTurn(0, DriveTrain.kCamera)); // angle is not used; it is grabbed from the camera
+    	addSequential(new ConditionalTurn(0, DriveTrain.kCamera),2.5); // angle is not used; it is grabbed from the camera
     	// Drive to the cube
-    	addSequential(new DriveWithPID(DriveTrain.kUseCamera));
+    	addSequential(new DriveWithPID(DriveTrain.kUseCamera), 2.5);
     	// Grab the cube
     	addSequential(new CloseClamps());
     	// Raise the elevator to switch delivery position
-    	addSequential(new ElevatorwithPID(20)); //Something more than 18.75 inches... TBD
+    	addSequential(new ElevatorMove(1), Elevator.kTimeLoadToSwitch); //ElevatorwithPID(20)); //Something more than 18.75 inches... TBD
     	// Drive forward until the bumpers touch.  Bumpers are about 6" deep, so cube-bumper is about 6"
-    	addSequential(new DriveWithPID(6));
+    	addSequential(new DriveWithPID(6), 2);
     	// Drop the cube
     	addSequential( new OpenClamps());
     	// Done!

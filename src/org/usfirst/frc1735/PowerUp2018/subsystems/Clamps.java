@@ -72,5 +72,8 @@ public class Clamps extends Subsystem {
     public boolean isOpen() {
     	return (doubleSolenoid.get() == Value.kForward);
     }
+    
+    public static final double kClampsDeployTimeout = 1.25;
+    public static final double kClampsRetractTimeout = 1.25;
 }
 

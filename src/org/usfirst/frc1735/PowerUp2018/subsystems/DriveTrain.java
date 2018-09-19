@@ -96,8 +96,8 @@ public class DriveTrain extends Subsystem implements PIDOutput {
         double area = ta.getDouble(0);
         double cameraAngle = 56.25; // practice bot was 56
         double targetHeight = 5.5;
-        double cameraHeight = 41.25;
-        double cameraToFrame = 6.25;
+        double cameraHeight = 40.875;
+        double cameraToFrame = 6.375;
         double d;
         d = ((Math.tan(Math.toRadians(cameraAngle + y))) * (cameraHeight - targetHeight)) - cameraToFrame;
         SmartDashboard.putNumber("Cube Distance", d);
@@ -200,14 +200,14 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     	rightMotor.configMotionCruiseVelocity(2700, 0);
 
     	// It's not clear how the MotionAcceleration and the ClosedloopRamp differ...
-    	leftMotor.configMotionAcceleration(5400, 0); //want to get to full speed in 1/3 sec, so triple the velocity
-    	rightMotor.configMotionAcceleration(5400, 0); 
+    	leftMotor.configMotionAcceleration(kAccelUnits, 0); //want to get to full speed in 1/3 sec, so triple the velocity
+    	rightMotor.configMotionAcceleration(kAccelUnits, 0); 
 
     	// Set the closed loop ramp as well (time in seconds to full speed; timeout)
-    	leftMotor.configClosedloopRamp(0.5, 0); //want to get to full speed in 1/3 sec
-    	leftMotor.configOpenloopRamp(0.5, 0);
-    	rightMotor.configClosedloopRamp(0.5, 0);
-    	rightMotor.configOpenloopRamp(0.5, 0);
+    	leftMotor.configClosedloopRamp(kAccelTime, 0); //want to get to full speed in 1/3 sec
+    	leftMotor.configOpenloopRamp(kAccelTime, 0);
+    	rightMotor.configClosedloopRamp(kAccelTime, 0);
+    	rightMotor.configOpenloopRamp(kAccelTime, 0);
 
 
     	//Set the closed-loop allowable error.  Empirically on no-load, error was <50 units.
@@ -225,8 +225,8 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     	// Throw a lot of settings up on the SmartDashboard...
     	SmartDashboard.putNumber("Cruise SpeedDir", 2700); // speed in units per 100ms (2745 is full speed)
     	SmartDashboard.putNumber("Cruise Dist", 72); // inches (DriveWithPID will convert to encoder ticks)
-    	SmartDashboard.putNumber("Cruise Accel", 5400); //8100 = 1/3 sec to get to full 2700 speed
-    	SmartDashboard.putNumber("Cruise R Accel", 5400);     	//10000 = Temporary to allow setting left vs right accel separately
+    	SmartDashboard.putNumber("Cruise Accel", kAccelUnits); //8100 = 1/3 sec to get to full 2700 speed
+    	SmartDashboard.putNumber("Cruise R Accel", kAccelUnits);     	//10000 = Temporary to allow setting left vs right accel separately
     	SmartDashboard.putNumber("P", kDistP);
     	SmartDashboard.putNumber("I", kDistI);
     	SmartDashboard.putNumber("D", kDistD);
@@ -391,31 +391,34 @@ public class DriveTrain extends Subsystem implements PIDOutput {
 
 		// If an Xbox controller, try using the two sticks on controller 0 (Left side) instead of using two joysticks		
 		if (DriverStation.getInstance().getJoystickIsXbox(joyLeft.getPort())) {// if Xbox, it's probably the only input and would be on input0.
-			joyLeftX = joyLeft.getRawAxis(0);  // Left stick X
-			joyLeftY = joyLeft.getRawAxis(1);  // Left stick Y
+			//joyLeftX = joyLeft.getRawAxis(0);  // Left stick X
+			//joyLeftY = joyLeft.getRawAxis(1);  // Left stick Y
 			joyRightX = joyLeft.getRawAxis(4); // Right stick X
 			joyRightY = joyLeft.getRawAxis(5); // Right stick Y
 		}
 		else if (DriverStation.getInstance().getJoystickName(joyLeft.getPort()).equals("Logitech Dual Action")) { //Similar to the Xbox in behavior, but with different raw buttons/axes
-			joyLeftX = joyLeft.getRawAxis(0);  // Left stick X
-			joyLeftY = joyLeft.getRawAxis(1);  // Left stick Y
+			//joyLeftX = joyLeft.getRawAxis(0);  // Left stick X
+			//joyLeftY = joyLeft.getRawAxis(1);  // Left stick Y
 			joyRightX = joyLeft.getRawAxis(2); // Right stick X
 			joyRightY = joyLeft.getRawAxis(3); // Right stick Y
 
 		}
 		else {
-			joyLeftX  = joyLeft.getX();
-			joyLeftY  = joyLeft.getY();
+			//joyLeftX  = joyLeft.getX();
+			//joyLeftY  = joyLeft.getY();
 			joyRightX = joyRight.getX();
 			joyRightY = joyRight.getY();
 		}
-
+		// Use the oi function to get our drive data
+		joyLeftX = Robot.oi.getDriverArcadeX();
+		joyLeftY = Robot.oi.getDriverArcadeY();
+		
 		// Print the raw joystick inputs
 		//System.out.println("Raw Values:  joyLeftY="+joyLeftY+" joyLeftX="+joyLeftX + " joyRightY="+joyRightY+" joyRightX="+joyRightX);
 		SmartDashboard.putNumber("JoyLX", joyLeftX);
 		SmartDashboard.putNumber("JoyLY", joyLeftY);
-		SmartDashboard.putNumber("JoyRX", joyRightX);
-		SmartDashboard.putNumber("JoyRY", joyRightY);
+		//SmartDashboard.putNumber("JoyRX", joyRightX);
+		//SmartDashboard.putNumber("JoyRY", joyRightY);
 		
 		// Apply the 'dead zone' guardband to the joystick inputs:
 		// Centered joysticks may not actually read as zero due to spring variances.
@@ -444,7 +447,8 @@ public class DriveTrain extends Subsystem implements PIDOutput {
 		else if (this.isInArcadeMode()) {
 			// We call the "local" wrapper, which uses programming assumptions that FWD = positive and Clockwise = positive.			
 			// However, because the joystick Y axis "up" is negative, we swap the sign on that Y axis only.
-			this.arcadeDrive(-joyRightY, joyRightX, squaredInputs); // Arcade uses one joystick:  Y axis for forward/backwards, and X axis for spin cw+/ccw-
+			// @FIXME:  JoyLeft now is a misnomer, as we dynamically change left/right based on type of joystick connected.
+			this.arcadeDrive(-joyLeftY, joyLeftX, squaredInputs); // Arcade uses one joystick:  Y axis for forward/backwards, and X axis for spin cw+/ccw-
 		}
 		// Error check.  If we have corrupted the mode somehow, and don't match any option, default to tank
 		else {
@@ -571,7 +575,7 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     
     public static final double kEncoderTicksPerInch = (4096 / (3.1415 * 6)); // 4096 encoder ticks per revolution; wheel diameter is nominally 6"
     static final double kToleranceDegrees = 0.5; // Stop if we are within this many degrees of the setpoint.
-    public static final double kToleranceDistUnits = (int) 0.5/*inches*/ * kEncoderTicksPerInch; // stop if we are within this many encoder units of our setpoint.  18.85 inches/rev and 4096 ticks/rev means .25" is ~50 encoder ticks
+    public static final double kToleranceDistUnits = (int) 1/*inches*/ * kEncoderTicksPerInch; // stop if we are within this many encoder units of our setpoint.  18.85 inches/rev and 4096 ticks/rev means .25" is ~50 encoder ticks
 
     static final double kLargeTurnP = 0.015;
     static final double kLargeTurnI = 0.00; //0.001504;
@@ -580,23 +584,28 @@ public class DriveTrain extends Subsystem implements PIDOutput {
     public static final double kLargeTurnPIDOutputMax = 0.55; // Max motor output in large PID mode 0.55
 
     public static final double kMedTurnPIDLimit = 15.0; // Errors smaller than this number of degrees should use the medium PID profile
-    static final double kMedTurnP = 0.175; //use a very large (relative to normal) P to guarantee max motor output
+    static final double kMedTurnP = 0.2; //use a very large (relative to normal) P to guarantee max motor output
     static final double kMedTurnI = 0.00;
     static final double kMedTurnD = 0.5;
     static final double kMedTurnF = 0.00;
-    public static final double kMedTurnPIDOutputMax = 0.1875; // Max motor output in medium PID mode
+    public static final double kMedTurnPIDOutputMax = 0.24; // Max motor output in medium PID mode
 
     public static final double kSmallTurnPIDLimit = 1; // Errors smaller than this number of degrees should use the small PID profile
     static final double kSmallTurnP = 0.4; //use a very large (relative to normal) P to guarantee max motor output
     static final double kSmallTurnI = 0.1;
     static final double kSmallTurnD = 0.5;
     static final double kSmallTurnF = 0.00;
-    public static final double kSmallTurnPIDOutputMax = 0.1575; // Max motor output in small PID mode
+    public static final double kSmallTurnPIDOutputMax = 0.19; // Max motor output in small PID mode
 
     /* Hardware PID values for the Talon */
     static final double kDistP = 0.075; //Practice bot had .15 but was also overshooting.  
     static final double kDistI = 0.0;//0.005 on 2017 robot
     static final double kDistD = 0.0;
     static final double kDistF = 0.3789; // Use for MotionMagic.  You must set this to ZERO if using Position mode!!!!!
+    static final double kAccelTime  = 0.625; // Time to reach full velocity
+    static final double kTopSpeed = 2700; // Encoder units per 100us.
+    static final int kAccelUnits = (int) (kTopSpeed/kAccelTime); //velocity to reach after 1 second (2700 is full speed)
+    static final double kRightAccelTime = 0.625; // allow for a different accel on right side if needed
+    static final int kRightAccelUnits= (int) (kTopSpeed/kRightAccelTime);
 }
 

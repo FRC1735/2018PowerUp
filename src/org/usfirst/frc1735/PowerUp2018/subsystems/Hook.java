@@ -53,13 +53,13 @@ public class Hook extends Subsystem {
 
     }
 
+    
     // Put methods for controlling this subsystem
     // here. Call these from Commands.
     public void extend() {
-    	doubleSolenoid.set(Value.kForward);
+    	//doubleSolenoid.set(Value.kForward);
     }
     public void retract() {
-    	System.out.println("Closing Clamps!");
     	doubleSolenoid.set(Value.kReverse);
     }
 

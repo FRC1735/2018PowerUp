@@ -190,7 +190,7 @@ public class DriveWithPID extends Command {
     // Given a new distance, calculate a new rolling average.
     protected double calcAvgDist(int latestDist) {
     	// Remove the oldest item in the distHistory (if too many exist)
-    	while (m_distHistory.size() > 150) // Rolling average of five items 0..4
+    	while (m_distHistory.size() > 50) // Rolling average of n items 0..(n-1)
     		m_distHistory.remove(0);
     	
     	// Add the latest distance to the list

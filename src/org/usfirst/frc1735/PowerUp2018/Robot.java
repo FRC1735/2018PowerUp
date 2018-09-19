@@ -102,6 +102,7 @@ public class Robot extends TimedRobot {
 
         chooser.addDefault("Built In Autonomous", new BuiltInAutonomous()); // This command is a placeholder!!  we compare against it in Robot.autonomousInit() to determine whether to run that function's built-in autonomous choosing code.
         chooser.addObject("Auto Do Nothing", new AutoDoNothing()); // Issues a wait(1) and nothing else.
+        chooser.addObject("AutoLineOnly", new AutoLineOnly()); // Cross the auto line and stop.
         chooser.addObject("Autonomous Experiment", new AutonomousExperiment()); // Good for the oddball experiment you want to try
         chooser.addObject("Autonomous Single Command", new AutonomousCommand()); // If you just wanted to add one solitary command, implement it here.
 
@@ -127,6 +128,10 @@ public class Robot extends TimedRobot {
     	fieldPositionChooser.addDefault("Far Right", "Far Right"); // tag, value (both happen to be the same for this use)
         // Add the chooser widget to the dashboard
         SmartDashboard.putData("Robot Field Position", fieldPositionChooser);
+        
+        //Value to be used for the SmartDashboard-provided elevator move function.
+        SmartDashboard.putNumber("Elev Timeout", 0); // Timeout in seconds
+        SmartDashboard.putNumber("Elev magDir", 0); // Magnitude/direction
     	
 	    try {
 			/***********************************************************************
@@ -280,7 +285,9 @@ public class Robot extends TimedRobot {
     				( isOurSwitch)  &&                         // it's our switch and
     				( isOurScale))                             // it's our scale
     		{
-    			autonomousCommand = new AutoSwitchAndScale(); // We have both switch and scale on our side!  Deliver to both.
+    			//autonomousCommand = new AutoSwitchAndScale(); // We have both switch and scale on our side!  Deliver to both.
+    			// With half a lift, we can't do the scale, so do two switches
+    			autonomousCommand = new AutoSwitch2x();
     		}
     		else if((m_robotIsFarRight || m_robotIsFarLeft) && // Corner placement of robot and
     				( isOurSwitch)  &&                         // it's our switch but
@@ -292,7 +299,9 @@ public class Robot extends TimedRobot {
     				(!isOurSwitch)  &&                         // it's NOT our switch but
     				( isOurScale))                             // it's our scale
     		{
-    			autonomousCommand = new AutoScale2x(); // We have scale but not switch.  Deliver two cubes to the scale
+    			//autonomousCommand = new AutoScale2x(); // We have scale but not switch.  Deliver two cubes to the scale
+    			// With half a lift, we can't do the scale.  Since we also don't have the switch, just cross the auto line for points
+    			autonomousCommand = new AutoLineOnly(); // We have neither switch nor scale.  Just cross the auto line for points.
     		}
     		else if((m_robotIsFarRight || m_robotIsFarLeft) && // Corner placement of robot but
     				(!isOurSwitch)  &&                         // it's NOT our switch and
@@ -309,7 +318,7 @@ public class Robot extends TimedRobot {
     	}
     	else // override the built-in choice above...
     	{
-    		System.out.println("SD says we should run an override autonomous: " + chooser.getSelected().getName());
+    		DriverStation.reportWarning("SD says we should run an override autonomous: " + chooser.getSelected().getName(), false);
     		autonomousCommand = chooser.getSelected();
     	}
 
@@ -343,6 +352,8 @@ public class Robot extends TimedRobot {
         
     	// Some late initialization that happens between robotInit() and actual robot enable
     	Robot.driveTrain.lateInit();
+    	//Robot.oi.setJoystickButtonMap(); // Map all joystick buttons based on the joystick types available at this time
+
 
     }
 

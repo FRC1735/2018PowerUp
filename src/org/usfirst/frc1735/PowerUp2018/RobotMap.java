@@ -76,7 +76,7 @@ public class RobotMap {
         elevatorElevatorMotor = new WPI_TalonSRX(5);
         
         
-        clampsDeployerDeployMotor = new Spark(0);
+        clampsDeployerDeployMotor = new Spark(8);
         LiveWindow.addActuator("ClampsDeployer", "Deploy Motor", (Spark) clampsDeployerDeployMotor);
         clampsDeployerDeployMotor.setInverted(true);
         clampsCompressor = new Compressor(0);
@@ -85,7 +85,7 @@ public class RobotMap {
         clampsDoubleSolenoid = new DoubleSolenoid(0, 0, 1);
         LiveWindow.addActuator("Clamps", "Double Solenoid", clampsDoubleSolenoid);
         
-        piggybackBarSpeedController1 = new Spark(1);
+        piggybackBarSpeedController1 = new Spark(9);
         LiveWindow.addActuator("PiggybackBar", "Speed Controller 1", (Spark) piggybackBarSpeedController1);
         piggybackBarSpeedController1.setInverted(false);
         hookDoubleSolenoid = new DoubleSolenoid(0, 2, 3);
