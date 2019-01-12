@@ -188,7 +188,7 @@ public class Robot extends TimedRobot {
     	m_robotIsMidLeft = false;
     	m_robotIsMidRight = false;
     	m_robotIsFarRight = false;
-    	m_
+    
     	// Ask the AutonomousChooser for guidance.
     	// if it says to run the hard-coded routine, do that.
     	// Otherwise, if we override that, do what it says to do.
